@@ -28,27 +28,41 @@ algore_run = 0
 
 #----------------------------------------------------------------------------
 # GENERAL PARAMETERS
-loc = "sfk"                     # location prefix, name of the GRASS directory, also 'P' and 'location'
-C = "2"                         # cell size in meters
-bregion = "b8k"		        # boundary used in g.region: b5k,b8k,b10,default
-pref = bregion + C + 'm'        # used as name prefix when g.region is not default
+# GRASS GIS requires 4 inputs to start: 
+# GIS BASE (GISBASE): path to GRASS binaries. Set automatically in ssr_utilities.py
+# DATABASE (GISDBASE): A directory (folder) on disk to contain all GRASS maps and data. 
+#                     Set automatically in ssr_utilities.py
+
+# LOCATION (loc): This is the name of a geographic location. It is defined by a
+#          co-ordinate system and a rectangular boundary.
+
+# MAPSET:   Each GRASS session runs under a particular MAPSET. This consists of
+#          a rectangular REGION and a set of maps. Every LOCATION contains at
+#          least a MAPSET called PERMANENT, which is readable by all sessions.
+#         The REGION defaults to the entire area of the chosen LOCATION.
+#         You may change it later with the command: g.region
+
+loc = 'sfk'                     # location prefix, name of the GRASS directory, also 'location'
+C = '30'                         # cell size in meters
+P = loc+C+'m'                   
+bregion = 'b8k'+C+'m'		        # boundary used in g.region: b5k,b8k,b10,default
+pref = bregion #+ C + 'm'        # used as name prefix when g.region is not default
 
 #----------------------------------------------------------------------------
 # SSR2: R.HORIZON PARAMETERS
 maxdistance = '10000'           # maxdistance = 10000 meters (longer than the diagnal of the map)
-inthstep = 1                    # horizonstep = 1 degree (causing 360 maps to be created)
-hstep = str(inthstep)
-dist = '0.5'                    # normal range (0.5 - 1.5) previous runs used 0.3 ?artifacting?
+hstep = '1'                    # horizonstep = 1 degree (causing 360 maps to be created)
+dist = '1.0'    #'0.5'                    # normal range (0.5 - 1.5) previous runs used 0.3 ?artifacting?
                                 # dist=1.0 or greater uses simplified calculation that causes artifacts
 
 #----------------------------------------------------------------------------
 # SSR3: R.SUN Solar Model Parameters
 # r.sun is designed to be run for 1 day, 24 hours.  script runs for 1 year, every week.
-linke_array = "helios"          # various options of turbidity values, "helios" is default for Angelo.
+linke_array = 'helios'          # various options of turbidity values, "helios" is default for Angelo.
 tl = linke_array
 start_day = 5                   # First Julian Day calculated
 week_step = 7                   # run r.sun once every week
-timestep = '0.1'                # 0.1 decimal hour = 6 minute timestep, default 0.5(30min), last run 0.5
+timestep = '0.5' #'0.1'                # 0.1 decimal hour = 6 minute timestep, default 0.5(30min), last run 0.5
 calib = 'hd'                    # r.sun calibration code:  'hd' = 0.50 * Diffuse, 1.0 * Direct, reflection is ignored.
                                 # calibration needs to be moved to algore script
 #----------------------------------------------------------------------------
@@ -65,11 +79,11 @@ else: # year == 'y04' or 'ym4'
 inSuffix='xyz'                          # filename suffix to filter for
 sep = ' '				# separator in lidar files ' ' or ','
 overlap = 10.00				# tile overlap in meters
-pdensitypref = "pdensity_c"+str(C)+year	# prefix to the point density rasters
+pdensitypref = 'pdensity_c'+C+year	# prefix to the point density rasters
 #if(year == 'y09'):
-#    pdensitypref = "pdensity_c"+str(C)+year	# prefix to the point density rasters
+#    pdensitypref = 'pdensity_c'+str(C)+year	# prefix to the point density rasters
 #else:
-#    pdensitypref = "pdensity_c"+str(C)+"y04" 
+#    pdensitypref = 'pdensity_c'+str(C)+'y04' 
 
 #----------------------------------------------------------------------------
 # SSR5: LPI PARAMETERS
@@ -80,7 +94,7 @@ lpipref = 'lpi_c'+C+year+'s'+boxsize+'m' # add the month to the end, e.g. lpi_c2
 
 #----------------------------------------------------------------------------
 # SSR6: ALGORE PARAMETERS
-halfdiff = True                            # Reduces the r.sun diffuse output by half. suffix 'half' on diffuse and global maps
+#halfdiff = True                            # Reduces the r.sun diffuse output by half. suffix 'half' on diffuse and global maps
 keeptemp = True				    # Testing only. Should be false for production.
 lpivsjune = False                           # Analysis only. Uses June LPI only
 sky = 'cs'				    # cs 'clear sky' or rs 'real sky' which includes cloudiness index.
