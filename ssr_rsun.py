@@ -120,7 +120,7 @@ def main():
 
         # Open log file
         tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
-        lf = open('3_rsun_'+tlog+'.log', 'a')
+        lf = open('rsun_'+tlog+'.log', 'a')
         printout("STARTING R.SUN MODELING RUN")
         printout("LOCATION: "+location)
         printout("HORIZONS: NOT USED. JUST DOING -S ON THE FLY")
@@ -153,48 +153,49 @@ def main():
                 printout(lf,'END preprocessing at '+ R1endtime + ', processing time: '+str(R1processingtime))
 
         # R.SUN Start
-		if(rsun_run > 0):
-			R3start = dt.datetime.now()
-			R3starttime = dt.datetime.strftime(R3start,"%m-%d %H:%M:%S")
-			printout('START  '+ R3starttime)
+	if(rsun_run > 0):
+		R3start = dt.datetime.now()
+		R3starttime = dt.datetime.strftime(R3start,"%m-%d %H:%M:%S")
+		printout('START  '+ R3starttime)
 
-			# Create one temp directory for each CPU core
-			printout("Creating Temporary directories, one per cpu core.")
-			create_temp(cores)
+		# Create one temp directory for each CPU core
+		printout("Creating Temporary directories, one per cpu core.")
+		create_temp(cores)
 		
-			# Spawn R.SUN processes
-			step = cores * week_step
-			for demr in ['dem','can']:
-				julian_seed =  start_day
-				jobs = []
-				for cpu in range(0,cores):
-					p = mp.Process(target=worker_sun, args=(cpu,julian_seed,step,demr,bregion))
-					p.start()
-					jobs.append(p)
-					pid = str(p.pid)
-					printout("r.sun: dem = "+demr+" cpu = "+str(cpu)+" julian_seed = "+str(julian_seed)+" pid = "+pid)
-					julian_seed += week_step
+		# Spawn R.SUN processes
+		step = cores * week_step
+		for demr in ['dem','can']:
+			julian_seed =  start_day
+			jobs = []
+			for cpu in range(0,cores):
+				p = mp.Process(target=worker_sun, args=(cpu,julian_seed,step,demr,bregion))
+				p.start()
+				jobs.append(p)
+				pid = str(p.pid)
+				printout("r.sun: dem = "+demr+" cpu = "+str(cpu)+" julian_seed = "+str(julian_seed)+" pid = "+pid)
+				julian_seed += week_step
 
-				# Wait for all the Processes to finish
-				for p in jobs:
-					pid = str(p.pid)
-					palive = str(p.is_alive)
-					p.join()
-					printout(demr+" on "+pid+" joined.")
-				printout("R.Sun finished for "+demr)
+			# Wait for all the Processes to finish
+			for p in jobs:
+				pid = str(p.pid)
+				palive = str(p.is_alive)
+				p.join()
+				printout(demr+" on "+pid+" joined.")
+			printout("R.Sun finished for "+demr)
 		
-			# Copy all the files back over to sun mapset
-			suffixes = ['glob','beam','diff','refl','dur']
-			copy_fromtemp(msun,suffixes,1)
+		# Copy all the files back over to sun mapset
+		suffixes = ['glob','beam','diff','refl','dur']
+		copy_fromtemp(msun,suffixes,1)
 
-			# Delete the temp mapsets
-			remove_temp(cores)
+		# Delete the temp mapsets
+		remove_temp(cores)
 
-			# Finish
-			R3end = dt.datetime.now()
-			R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")
-			R3processingtime = R3end - R3start
-			printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime))
+		# Finish
+		R3end = dt.datetime.now()
+		R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")
+		R3processingtime = R3end - R3start
+		printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime))
+	lf.close()
                 
 
 if __name__ == "__main__":
