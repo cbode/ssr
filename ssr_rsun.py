@@ -208,5 +208,5 @@ if __name__ == "__main__":
                 traceback.print_exc(file=lf)
                 
         finally:
-                lf.close()
+                #lf.close()
                 sys.exit("FINISHED.")
