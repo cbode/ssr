@@ -22,31 +22,33 @@
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
 preprocessing_run = 2
+rsun_run = 2
 lpi_run = 0
-rsun_run = 0
 algore_run = 0
 
 #----------------------------------------------------------------------------
 # GENERAL PARAMETERS
 # GRASS GIS requires 4 inputs to start: 
 # GIS BASE (GISBASE): path to GRASS binaries. Set automatically in ssr_utilities.py
+gisbase = '/usr/lib64/grass-6.4.1'		# Ios: Grass 6.4.1 from RPM
 # DATABASE (GISDBASE): A directory (folder) on disk to contain all GRASS maps and data. 
 #                     Set automatically in ssr_utilities.py
-
+gisdbase = '/local/collin_light/'               # Ios: local drive
 # LOCATION (loc): This is the name of a geographic location. It is defined by a
-#          co-ordinate system and a rectangular boundary.
+#          co-ordinate system and a rectangular boundary.  This is the name of the directory.
+loc = location = 'sfk'                     
 
 # MAPSET:   Each GRASS session runs under a particular MAPSET. This consists of
-#          a rectangular REGION and a set of maps. Every LOCATION contains at
-#          least a MAPSET called PERMANENT, which is readable by all sessions.
-#         The REGION defaults to the entire area of the chosen LOCATION.
-#         You may change it later with the command: g.region
+#          a rectangular REGION and a set of maps. See bottom of params for mapsets.
 
-loc = 'sfk'                     # location prefix, name of the GRASS directory, also 'location'
 C = '30'                         # cell size in meters
 P = loc+C+'m'                   
-bregion = 'b8k'+C+'m'		        # boundary used in g.region: b5k,b8k,b10,default
-pref = bregion #+ C + 'm'        # used as name prefix when g.region is not default
+bregion = 'b8k'		        # boundary used in g.region: b5k,b8k,b10,default
+pref = bregion + C + 'm'        # used as name prefix when g.region is not default
+
+# INPUT RASTERS
+demsource = 'sfk1mdem'
+cansource = 'sfk1mcan'
 
 #----------------------------------------------------------------------------
 # SSR2: R.HORIZON PARAMETERS
@@ -114,16 +116,16 @@ algore = 'gl'		                    # Options: 'pl' = Power Law, 'nl' = Natural L
 
 #----------------------------------------------------------------------------
 # MAP NAMES
-dem = loc + 'dem'              # source map: bare-earth dem
-can = loc + 'can'              # source map: canopy dem
-sloped = dem + 'slope'          # slope, bare-earth
-slopec = can + 'slope'          # slope, canopy
-aspectd = dem + 'aspect'        # aspect, bare-earth
-aspectc = can + 'aspect'        # aspect, canopy
-vegheight = loc + 'vegheight'  # vegetation height
-albedo = loc + 'albedo'        # albedo by vegtype
-demhor = dem + 'hor'            # horizon, bare-earth
-canhor = can + 'hor'            # horizon, canopy
+dem = P + 'dem'              # source map: bare-earth dem
+can = P + 'can'              # source map: canopy dem
+sloped = P + 'demslope'          # slope, bare-earth
+slopec = P + 'canslope'          # slope, canopy
+aspectd = P + 'demaspect'        # aspect, bare-earth
+aspectc = P + 'canaspect'        # aspect, canopy
+vegheight = P + 'vegheight'  # vegetation height
+albedo = P + 'albedo'        # albedo by vegtype
+demhor = P + 'demhor'            # horizon, bare-earth
+canhor = P + 'demhor'            # horizon, canopy
 
 
 #----------------------------------------------------------------------------

@@ -16,11 +16,13 @@
 # MODULES REQUIRED
 import os
 import sys
-import platform
 import re
+import shutil
+import platform
 import datetime as dt
 import grass.script as grass
 import grass.script.setup as gsetup
+from ssr_params import *
 
 ###############################################################
 #
@@ -28,25 +30,25 @@ import grass.script.setup as gsetup
 #
 ###############################################################
 
-def printout(lf,str_text):
+def printout(str_text,lf):
     timestamp = dt.datetime.strftime(dt.datetime.now(),"%H:%M:%S")
     lf.write(timestamp+": "+str_text+'\n')
     print timestamp+": "+str_text
 
-def set_region(bregion):
+def set_region(bregion,C):
     # remove g.region for normal runs
     if(bregion == "b5k"):
-            grass.run_command("g.region", n=4400220.4, s=4395220.4, e=447761.8, w=442761.8) # b5k
+            grass.run_command("g.region", n=4400220.4, s=4395220.4, e=447761.8, w=442761.8,ewres=C,nsres=C) # b5k
     elif(bregion == "b8k"):
-            grass.run_command("g.region", n=4401000.00, s=4393000.00, e=450000.00, w=442000.00) #b8k
+            grass.run_command("g.region", n=4401000.00, s=4393000.00, e=450000.00, w=442000.00,ewres=C,nsres=C) #b8k
     elif(bregion == "b9k"):
-            grass.run_command("g.region", n=4401000.00, s=4392000.00, e=451000.00, w=442000.00) #b9k
+            grass.run_command("g.region", n=4401000.00, s=4392000.00, e=451000.00, w=442000.00,ewres=C,nsres=C) #b9k
     elif(bregion == "b10k"):
-            grass.run_command("g.region", n=4401000.00, s=4391000.00, e=450000.00, w=440000.00) # b10k
+            grass.run_command("g.region", n=4401000.00, s=4391000.00, e=450000.00, w=440000.00,ewres=C,nsres=C) # b10k
     elif(bregion == "cahto"):
-            grass.run_command("g.region", n=4398000.00, s=4392000.00, e=451000.00, w=448000.00) # cahto
+            grass.run_command("g.region", n=4398000.00, s=4392000.00, e=451000.00, w=448000.00,ewres=C,nsres=C) # cahto
     else:
-            grass.run_command("g.region",flags="d")
+            grass.run_command("g.region",ewres=C,nsres=C, flags="d")
 
 def mapset_gotocreate(mapset):
     #grass.run_command("g.mapset","l")
@@ -69,54 +71,55 @@ def mapset_gotocreate(mapset):
 #
 ###############################################################
 
-def set_server_environment(): # OUTSIDE
+def set_server_environment(lf): # OUTSIDE
     server_name = platform.uname()[1]
     if(server_name == 'ios.safl.umn.edu'):
         # Ios.safl.umn.edu
         gisbase = os.environ['GISBASE'] = "/usr/lib64/grass-6.4.1"		# Ios: Grass 6.4.1 from RPM
-        gisdbase = os.path.abspath("/ssd/collin_light/")
-        #gisdbase = os.path.abspath("/local/collin_light/")
+        #gisdbase = os.path.abspath("/ssd/collin_light/")
+        gisdbase = os.path.abspath("/local/collin_light/")
     elif(server_name == 'pollux'):
         # Pollux
         gisbase = os.environ['GISBASE'] = "/usr/lib64/grass-6.4.2"		# Grass 6.4.2 from RPM
         gisdbase = os.path.abspath("/data/rsun/")
     elif(server_name == 'ubander'):
         # uBander with OpenCL
-        gisbase = os.environ['GISBASE'] = "/usr/local/grass-7.0.svn/"	# Grass 7.0svn
+        gisbase = os.environ['GISBASE'] = "/usr/local/grass-7.0.svn/"	        # Grass 7.0svn
         gisdbase = os.path.abspath("/home/collin/grass/")
     elif(server_name == 'Bandersnatch'):
         gisbase = os.environ['GISBASE'] = "C:/Programs/GRASS/"
         gisdbase = os.path.abspath("S:/ssr/")        
     else:
-        printout('WARNING! set_server_environment failed.  Unrecognized server_name. Quitting.')
+        printout('WARNING! set_server_environment failed.  Unrecognized server_name. Quitting.',lf)
         exit()
     sys.path.append(os.path.join(os.environ['GISBASE'], "etc", "python"))
     return gisbase,gisdbase
 
-def create_temp(cores): # OUTSIDE
+
+def create_temp(cores,lf): # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
         for count in range(0,cores,1):
                 temp = 'temp'+str(count).zfill(2)
                 temp_path = gisdbase+'/'+location+'/'+temp
                 if(os.path.exists(temp_path) == False):
                         grass.run_command("g.mapset",flags="c", mapset=temp, quiet=1)
-                        printout(temp+" mapset created.")
+                        printout(temp+" mapset created.",lf)
                 else:
-                        printout(temp+" mapset already exists. skipping...")
+                        printout(temp+" mapset already exists. skipping...",lf)
 
 
 def remove_temp(cores): # OUTSIDE
         # setup is in the target mapset, not temp mapsets
-        gsetup.init(gisbase, gisdbase, location, mapset)
+        gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
         # Delete the temp mapset
         for count in range(0,cores):
                 mapset_temp = 'temp'+str(count).zfill(2)
                 grass.run_command("g.mapsets", removemapset=mapset_temp)
                 temp_path = gisdbase+'/'+location+'/'+mapset_temp
                 shutil.rmtree(temp_path)
+                
 
-
-def copy_fromtemp(mapset_to,suffixes,overwrite):  # OUTSIDE
+def copy_fromtemp(cores,mapset_to,suffixes,overwrite,lf):  # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, mapset_to)
         for count in range(0,cores):
                 # Switch to temp mapset
@@ -132,11 +135,11 @@ def copy_fromtemp(mapset_to,suffixes,overwrite):  # OUTSIDE
                                         old = rast[0]+ '@' + rast[1]
                                         new = rast[0]
                                         cmd = old+","+new
-                                        printout("g.copy, rast="+cmd+", overwrite="+str(overwrite))
+                                        printout("g.copy, rast="+cmd+", overwrite="+str(overwrite),lf)
                                         grass.run_command("g.copy", rast=cmd, overwrite=overwrite)
 
 
-def copy_mapset(mapset_from,mapset_to,regfilter,overwrite):      # OUTSIDE
+def copy_mapset(mapset_from,mapset_to,regfilter,overwrite,lf):      # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, mapset_from)
         #grass.run_command("g.mapset", mapset=mapset_from, quiet=1)
         # list contents of temp mapset
@@ -148,7 +151,7 @@ def copy_mapset(mapset_from,mapset_to,regfilter,overwrite):      # OUTSIDE
                         old = rast[0]+ '@' + rast[1]
                         new = rast[0]
                         cmd = old+","+new
-                        printout("g.copy, rast="+cmd+", overwrite="+str(overwrite))
+                        printout("g.copy, rast="+cmd+", overwrite="+str(overwrite),lf)
                         grass.run_command("g.copy", rast=cmd, overwrite=overwrite)
 
 

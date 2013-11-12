@@ -27,22 +27,34 @@ global gisbase
 global gisdbase
 
 # MODULES REQUIRED
-from ssr_params import *
-from ssr_utilities import *
 import traceback
-import shutil
 import multiprocessing as mp
 import numpy
 from scipy.interpolate import interpolate
-#sys.path.append(os.path.join(os.environ['GISBASE'], "etc", "python"))
 
-# Identify which server python is running on and set specific paths
-gisbase,gisdbase = set_server_environment()
+# GRASS & SSR environment setup for external use
+from ssr_params import *
+import os
+import sys
+gisdbase = os.path.abspath(gisdbase)
+os.environ['GISBASE'] = gisbase
+sys.path.append(os.path.join(os.environ['GISBASE'], "etc", "python"))
+import grass.script as grass
+import grass.script.setup as gsetup
+# ssr_utilities must go after grass.script imports
+from ssr_utilities import *
+
 
 # FUNCTIONS
 def preprocessing(mapset,ow):
         gsetup.init(gisbase, gisdbase, loc, mapset)
-        set_region(bregion)
+        set_region(bregion,C)
+	
+	# Regrid from Input Raster to Target Cell size
+	if(demsource != dem):
+		grass.run_command("r.resample",input=demsource,output=dem,overwrite=ow)
+	if(demsource != dem):
+		grass.run_command("r.resample",input=cansource,output=can,overwrite=ow)
 	
         # Slope and Aspect
         grass.run_command("r.slope.aspect", elevation=dem, slope=sloped, \
@@ -61,11 +73,15 @@ def preprocessing(mapset,ow):
 def worker_sun(cpu,julian_seed,step,demr,ow):
         mtemp = 'temp'+str(cpu).zfill(2)
         gsetup.init(gisbase, gisdbase, loc, mtemp)
-        set_region(bregion)
+        set_region(bregion,C)
 
         # Input Maps
-        elevdem = loc+demr+'@PERMANENT'
-        horr = loc+demr+'hor'
+        if(demr == 'dem'):
+            elevdem = dem+'@PERMANENT'
+            horr = demhor
+        else:
+            elevdem = can+'@PERMANENT'
+            horr = canhor
 
         # Run r.sun for each week of the year 366
         for doy in range(julian_seed,366,step):
@@ -73,17 +89,17 @@ def worker_sun(cpu,julian_seed,step,demr,ow):
                 linke = linke_interp(doy,linke_array)
                 # Output maps
                 beam = pref+demr+day+'beam'
-                dur = pref+demr+day+'dur'
                 diff = pref+demr+day+'diff'
                 refl = pref+demr+day+'refl'
-                glob = pref+demr+day+'glob'
+                dur = pref+demr+day+'dur'
+                #glob = pref+demr+day+'glob'
                 grass.run_command("r.sun", flags="s", elevin=elevdem, albedo=albedo, \
                                   horizonstep=hstep, \
                                   beam_rad=beam, insol_time=dur, \
                                   diff_rad=diff, refl_rad=refl, \
-                                  glob_rad=glob, day=doy, step=timestep, \
+                                  day=doy, step=timestep, \
                                   lin=linke, overwrite=ow) 
-                # horizon=horr, 
+                # horizon=horr, glob_rad=glob,
 
 def linke_interp(day,turb_array):
         # put monthly data here
@@ -118,61 +134,65 @@ def main():
         ##################################
         cores = mp.cpu_count() - 2
 
-        # Open log file
+	# Open log file
         tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
         lf = open('rsun_'+tlog+'.log', 'a')
-        printout("STARTING R.SUN MODELING RUN")
-        printout("LOCATION: "+location)
-        printout("HORIZONS: NOT USED. JUST DOING -S ON THE FLY")
-        printout("This computer has "+str(cores)+" CPU cores.")
-        printout('pref: '+pref)
-        printout('dem: '+dem)
-        printout('can: '+can)
-        #printout('horizon mapset: '+mhorizon)
-        printout('horizonstep: '+hstep)
-        printout('dist: '+dist)
-        printout('maxdistance: '+maxdistance)
-        printout('r.sun mapset: '+msun)
-        printout('linke_array: '+linke_array)
-        printout('timestep: '+timestep)
-        printout('start julian day: '+str(start_day))
-        printout('week step: '+str(week_step))
-        printout('_________________________________')
-
+	print 'STARTING dammit'
+	print 'gisbase='+gisbase
+	print 'cores='+str(cores)
+        printout("STARTING R.SUN MODELING RUN",lf)
+	print 'BIFF'
+        printout("LOCATION: "+loc,lf)
+        printout("HORIZONS: NOT USED. JUST DOING -S ON THE FLY",lf)
+        printout("This computer has "+str(cores)+" CPU cores.",lf)
+        printout('pref: '+pref,lf)
+        printout('dem: '+dem,lf)
+        printout('can: '+can,lf)
+        #printout('horizon mapset: '+mhorizon,lf)
+        printout('horizonstep: '+hstep,lf)
+        printout('dist: '+dist,lf)
+        printout('maxdistance: '+maxdistance,lf)
+        printout('r.sun mapset: '+msun,lf)
+        printout('linke_array: '+linke_array,lf)
+        printout('timestep: '+timestep,lf)
+        printout('start julian day: '+str(start_day),lf)
+        printout('week step: '+str(week_step),lf)
+        printout('_________________________________',lf)
+	
         # Preprocessing
         if(preprocessing_run > 0):
                 R1start = dt.datetime.now()
                 R1starttime = dt.datetime.strftime(R1start,"%m-%d %H:%M:%S")
-                printout(lf,'START preprocessing at '+ str(R1starttime))
+                printout('START PREPROCESSING at '+ str(R1starttime),lf)
 
-                preprocesing('PERMANENT',int(preprocessing_run-1))
+                preprocessing('PERMANENT',int(preprocessing_run - 1))
 
                 R1end = dt.datetime.now()
                 R1endtime = dt.datetime.strftime(R1end,"%m-%d %H:%M:%S")
                 R1processingtime = R1end - R1start
-                printout(lf,'END preprocessing at '+ R1endtime + ', processing time: '+str(R1processingtime))
+                printout('END PREPROCESSING at '+ R1endtime + ', processing time: '+str(R1processingtime),lf)
 
         # R.SUN Start
 	if(rsun_run > 0):
 		R3start = dt.datetime.now()
 		R3starttime = dt.datetime.strftime(R3start,"%m-%d %H:%M:%S")
-		printout('START  '+ R3starttime)
+		printout('START  '+ R3starttime,lf)
 
 		# Create one temp directory for each CPU core
-		printout("Creating Temporary directories, one per cpu core.")
-		create_temp(cores)
+		printout("Creating Temporary directories, one per cpu core.",lf)
+		create_temp(cores,lf)
 		
 		# Spawn R.SUN processes
 		step = cores * week_step
 		for demr in ['dem','can']:
-			julian_seed =  start_day
+			julian_seed = start_day
 			jobs = []
 			for cpu in range(0,cores):
 				p = mp.Process(target=worker_sun, args=(cpu,julian_seed,step,demr,bregion))
 				p.start()
 				jobs.append(p)
 				pid = str(p.pid)
-				printout("r.sun: dem = "+demr+" cpu = "+str(cpu)+" julian_seed = "+str(julian_seed)+" pid = "+pid)
+				printout("r.sun: dem = "+demr+" cpu = "+str(cpu)+" julian_seed = "+str(julian_seed)+" pid = "+pid,lf)
 				julian_seed += week_step
 
 			# Wait for all the Processes to finish
@@ -180,12 +200,13 @@ def main():
 				pid = str(p.pid)
 				palive = str(p.is_alive)
 				p.join()
-				printout(demr+" on "+pid+" joined.")
-			printout("R.Sun finished for "+demr)
+				printout(demr+" on "+pid+" joined.",lf)
+			printout("R.Sun finished for "+demr,lf)
 		
 		# Copy all the files back over to sun mapset
 		suffixes = ['glob','beam','diff','refl','dur']
-		copy_fromtemp(msun,suffixes,1)
+		mapset_gotocreate(msun)
+		copy_fromtemp(cores,msun,suffixes,1,lf)
 
 		# Delete the temp mapsets
 		remove_temp(cores)
@@ -194,11 +215,14 @@ def main():
 		R3end = dt.datetime.now()
 		R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")
 		R3processingtime = R3end - R3start
-		printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime))
+		printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime),lf)
+	print 'END'
 	lf.close()
                 
 
 if __name__ == "__main__":
+	main()
+"""
         try:
                 #options, flags = grass.parser()
                 main()
@@ -210,3 +234,4 @@ if __name__ == "__main__":
         finally:
                 #lf.close()
                 sys.exit("FINISHED.")
+"""
