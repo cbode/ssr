@@ -21,8 +21,9 @@
 
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
-preprocessing_run = 2
-rsun_run = 2
+preprocessing_run = 0
+rsun_run = 0
+lidar_run = 2
 lpi_run = 0
 algore_run = 0
 
@@ -36,12 +37,12 @@ gisbase = '/usr/lib64/grass-6.4.1'		# Ios: Grass 6.4.1 from RPM
 gisdbase = '/local/collin_light/'               # Ios: local drive
 # LOCATION (loc): This is the name of a geographic location. It is defined by a
 #          co-ordinate system and a rectangular boundary.  This is the name of the directory.
-loc = location = 'sfk'                     
+loc = location = 'sfk2m'                     
 
 # MAPSET:   Each GRASS session runs under a particular MAPSET. This consists of
 #          a rectangular REGION and a set of maps. See bottom of params for mapsets.
 
-C = '30'                         # cell size in meters
+C = '2' #'30'                         # cell size in meters
 P = loc+C+'m'                   
 bregion = 'b8k'		        # boundary used in g.region: b5k,b8k,b10,default
 pref = bregion + C + 'm'        # used as name prefix when g.region is not default
@@ -73,7 +74,7 @@ calib = 'hd'                    # r.sun calibration code:  'hd' = 0.50 * Diffuse
 # National Center for Airborne Laser Mapping (NCALM) distributes laser hits as 2 datasets:  total and ground filtered.
 year = 'y09'	        		# Year the LiDAR was flown 2004 'y04', 2004 modified to match y09 'ym4',2009 'y09'
 if(year == 'y09'):
-    inPath='/data/source/LiDAR/2009_SFEel_LiDAR/'
+    inPath='/data/source/LiDAR/2009_SFEel_LiDAR/ascii/'
     LidarPoints = [ 'filtered' , 'unfiltered' ]
 else: # year == 'y04' or 'ym4' 
     inPath='/data/source/LiDAR/2004_SFEel_LiDAR/TerraScan_EEL/laser_export/'
@@ -81,18 +82,16 @@ else: # year == 'y04' or 'ym4'
 inSuffix='xyz'                          # filename suffix to filter for
 sep = ' '				# separator in lidar files ' ' or ','
 overlap = 10.00				# tile overlap in meters
-pdensitypref = 'pdensity_c'+C+year	# prefix to the point density rasters
-#if(year == 'y09'):
-#    pdensitypref = 'pdensity_c'+str(C)+year	# prefix to the point density rasters
-#else:
-#    pdensitypref = 'pdensity_c'+str(C)+'y04' 
+if(year == 'y09'):
+    pdensitypref = 'pdensity_c'+str(C)+year	# prefix to the point density rasters
+else:
+    pdensitypref = 'pdensity_c'+str(C)+'y04' 
 
 #----------------------------------------------------------------------------
 # SSR5: LPI PARAMETERS
 #Radius = 8				# Previous radius was 8, but that is actually 8 cells per side * 2meters per cell = 32 meters, and actually I used 31x31 cell square.
 boxsize = '17'                          # Size is cell size of box for r.neighbors.  This is different than the actual box (9 cells x 2 meter cells = 18 meters)
-scriptPath = '/ssd/collin_light/scripts/' #'/data/rsun/scripts/'
-lpipref = 'lpi_c'+C+year+'s'+boxsize+'m' # add the month to the end, e.g. lpi_c2y09s17m10
+lpipref = 'zlpi_c'+C+year+'s'+boxsize   # add the month to the end, e.g. lpi_c2y09s17m10
 
 #----------------------------------------------------------------------------
 # SSR6: ALGORE PARAMETERS

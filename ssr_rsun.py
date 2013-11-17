@@ -137,14 +137,13 @@ def main():
 	# Open log file
         tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
         lf = open('rsun_'+tlog+'.log', 'a')
-	print 'STARTING dammit'
-	print 'gisbase='+gisbase
-	print 'cores='+str(cores)
+        
         printout("STARTING R.SUN MODELING RUN",lf)
-	print 'BIFF'
         printout("LOCATION: "+loc,lf)
         printout("HORIZONS: NOT USED. JUST DOING -S ON THE FLY",lf)
         printout("This computer has "+str(cores)+" CPU cores.",lf)
+        printout("Source DEM: "+demsource,lf)
+        printout("Source CAN: "+cansource,lf)
         printout('pref: '+pref,lf)
         printout('dem: '+dem,lf)
         printout('can: '+can,lf)
@@ -216,13 +215,10 @@ def main():
 		R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")
 		R3processingtime = R3end - R3start
 		printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime),lf)
-	print 'END'
 	lf.close()
                 
 
 if __name__ == "__main__":
-	main()
-"""
         try:
                 #options, flags = grass.parser()
                 main()
@@ -232,6 +228,6 @@ if __name__ == "__main__":
                 traceback.print_exc(file=lf)
                 
         finally:
-                #lf.close()
+                lf.close()
                 sys.exit("FINISHED.")
-"""
+

@@ -37,20 +37,23 @@ def printout(str_text,lf):
 
 def set_region(bregion,C):
     # remove g.region for normal runs
-    if(bregion == "b5k"):
-            grass.run_command("g.region", n=4400220.4, s=4395220.4, e=447761.8, w=442761.8,ewres=C,nsres=C) # b5k
+    if(bregion == "default"):
+        grass.run_command("g.region", flags="d")            
+    elif(bregion == "b5k"):
+        grass.run_command("g.region", n=4400220.4, s=4395220.4, e=447761.8, w=442761.8,ewres=C,nsres=C) # b5k
     elif(bregion == "b8k"):
-            grass.run_command("g.region", n=4401000.00, s=4393000.00, e=450000.00, w=442000.00,ewres=C,nsres=C) #b8k
+        grass.run_command("g.region", n=4401000.00, s=4393000.00, e=450000.00, w=442000.00,ewres=C,nsres=C) #b8k
     elif(bregion == "b9k"):
-            grass.run_command("g.region", n=4401000.00, s=4392000.00, e=451000.00, w=442000.00,ewres=C,nsres=C) #b9k
+        grass.run_command("g.region", n=4401000.00, s=4392000.00, e=451000.00, w=442000.00,ewres=C,nsres=C) #b9k
     elif(bregion == "b10k"):
-            grass.run_command("g.region", n=4401000.00, s=4391000.00, e=450000.00, w=440000.00,ewres=C,nsres=C) # b10k
+        grass.run_command("g.region", n=4401000.00, s=4391000.00, e=450000.00, w=440000.00,ewres=C,nsres=C) # b10k
     elif(bregion == "cahto"):
-            grass.run_command("g.region", n=4398000.00, s=4392000.00, e=451000.00, w=448000.00,ewres=C,nsres=C) # cahto
+        grass.run_command("g.region", n=4398000.00, s=4392000.00, e=451000.00, w=448000.00,ewres=C,nsres=C) # cahto
     else:
-            grass.run_command("g.region",ewres=C,nsres=C, flags="d")
+        grass.run_command("g.region", flags="d")
+        grass.run_command("g.region",ewres=C,nsres=C)
 
-def mapset_gotocreate(mapset):
+def mapset_gotocreate(mapset,bregion,C,lf):
     #grass.run_command("g.mapset","l")
     bmapexists = False
     mapset_list = grass.mapsets(False) 
@@ -58,11 +61,14 @@ def mapset_gotocreate(mapset):
         grass.message(map)
         if(mapset == map):
             bmapexists = True
-            grass.message("FOUND! "+mapset+" = "+map)
+            #grass.message("FOUND! "+mapset+" = "+map)
     if(bmapexists == True):
         grass.run_command("g.mapset",mapset=mapset)
+        printout('Changed mapsets to '+mapset,lf)
     else:  
-        grass.run_command("g.mapset","c",mapset=mapset)
+        grass.run_command("g.mapset",flags="c",mapset=mapset)
+        printout("Mapset didn't exist. Created then changed mapsets to "+mapset,lf)
+    set_region(bregion,C)
 
 ###############################################################
 #
@@ -81,7 +87,7 @@ def set_server_environment(lf): # OUTSIDE
     elif(server_name == 'pollux'):
         # Pollux
         gisbase = os.environ['GISBASE'] = "/usr/lib64/grass-6.4.2"		# Grass 6.4.2 from RPM
-        gisdbase = os.path.abspath("/data/rsun/")
+        gisdbase = os.path.abspath("/archive/grassdata/")
     elif(server_name == 'ubander'):
         # uBander with OpenCL
         gisbase = os.environ['GISBASE'] = "/usr/local/grass-7.0.svn/"	        # Grass 7.0svn
@@ -96,16 +102,19 @@ def set_server_environment(lf): # OUTSIDE
     return gisbase,gisdbase
 
 
-def create_temp(cores,lf): # OUTSIDE
+def create_temp(cores,bregion,lf): # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
         for count in range(0,cores,1):
                 temp = 'temp'+str(count).zfill(2)
                 temp_path = gisdbase+'/'+location+'/'+temp
                 if(os.path.exists(temp_path) == False):
                         grass.run_command("g.mapset",flags="c", mapset=temp, quiet=1)
+                        set_region(bregion,C)
                         printout(temp+" mapset created.",lf)
                 else:
                         printout(temp+" mapset already exists. skipping...",lf)
+                
+        
 
 
 def remove_temp(cores): # OUTSIDE

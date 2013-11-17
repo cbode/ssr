@@ -18,48 +18,82 @@
 #               for details.
 #
 #############################################################################
+# GLOBALS
+global lf
+global cores
+global gisbase
+global gisdbase
+
+# MODULES
+# GRASS & SSR environment setup for external use
 from ssr_params import *
+import os
+import sys
+gisdbase = os.path.abspath(gisdbase)
+os.environ['GISBASE'] = gisbase
+sys.path.append(os.path.join(os.environ['GISBASE'], "etc", "python"))
+import grass.script as grass
+import grass.script.setup as gsetup
+# ssr_utilities must go after grass.script imports
 from ssr_utilities import *
 
-#from grass.script import core as grass
 
 def main():
-        # Set Environmental Variables
-        #set_region(bregion)
-        set_server_environment(server_name)
-        mapset_gotocreate(mlpi)
-        scriptPath = gisdbase+'/scripts/' 
-        lpipref = "lpi_c"+str(C)+year+"s"+boxsize
+    gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
+    ##################################
+    # Light Penetration Index (LPI)
+    ##################################
+    # Open log file
+    tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
+    lf = open('rsun_'+tlog+'.log', 'a')
+    #mlpi = 'lpi'    # <-- debug remove
+    
+    printout("STARTING LPI RUN",lf)
+    printout("LOCATION: "+loc,lf)
+    printout("Source DEM: "+demsource,lf)
+    printout("Source CAN: "+cansource,lf)
+    printout('pref: '+pref,lf)
+    printout("LPI pref: "+lpipref,lf)
+    printout('LPI mapset: '+mlpi,lf)
+    printout("Boxsize: "+boxsize,lf)
+    printout('_________________________________',lf)
+	
+    # LPI
+    if(lpi_run > 0):
+        L2start = dt.datetime.now()
+        L2starttime = dt.datetime.strftime(L2start,"%m-%d %H:%M:%S")
+        printout('START LPI at '+ str(L2starttime),lf)
+        
+        # Mapset and Region Defined
+        mapset_gotocreate(mlpi,'default',C,lf)
 
         # LPI Weights Translation table
         weight_num = 4
         weight_name = 'lpi_box18x18_weight'
         month_weights = {1:1, 2:2, 3:2, 4:3, 5:4, 6:4, 7:4, 8:3, 9:3, 10:2, 11:2, 12:1}
+        scriptPath = gisdbase+'/scripts/' 
 
-        r2start = dt.datetime.now()
-        grass.message("R2 Starting LPI Calculation using size("+str(boxsize)+") at "+str(r2start))
+        printout("R2 Starting LPI Calculation using size("+str(boxsize)+")",lf)
 
         # Set names for ground/filtered and all/unfiltered point density rasters
         pdensityfilt = pdensitypref + LidarPoints[0]
         pdensityunf = pdensitypref + LidarPoints[1]
 
-        # Make sure we are at default extent of mapset
-        grass.run_command("g.region", flags = "d") 
-
         # Iterate through all the neighborhood weights and calculate LPI
         for weight in range(1,(weight_num+1)):
                 weight = str(weight)
-                pneighfilt = pdensitypref + "w"+str(weight)+LidarPoints[0]
-                pneighunf = pdensitypref + "w"+str(weight)+LidarPoints[1]
+                weight_file = scriptPath+weight_name+weight+'.txt'
+                pneighfilt = pdensitypref + "w"+weight+LidarPoints[0]
+                pneighunf = pdensitypref + "w"+weight+LidarPoints[1]
                 lpi = lpipref + "w"+weight
 
                 # LPI is calculated by running a neighborhood analysis on grids which contain a count of lidar points (ground filtered and raw - all points)
                 # The neighborhood analysis uses a bounding box defined by month (4 possible boxes) and sums all the lidar points within range
                 # LPI = Ground Filtered sum of LiDAR points / Raw All summed Points.  Result is a dimensionless ratio of Canopy Gap or Openness.
                 # Ratios occasionally exceed 1.0 (100%), so additional cleaning step included to set those to 100%.
-                grass.message("running neighborhood operation for ground filtered, weight"+weight+" at "+str(dt.datetime.now()))
-                grass.run_command("r.neighbors", overwrite = "true", input= pdensityfilt, output = pneighfilt, method = "sum", size = boxsize, weight = scriptPath+weight_name+weight+'.txt')
-                grass.run_command("r.neighbors", overwrite = "true", input= pdensityunf, output = pneighunf, method = "sum", size = boxsize, weight = scriptPath+weight_name+weight+'.txt')
+                printout("running neighborhood operation for ground filtered, weight"+weight,lf)
+                grass.run_command("r.neighbors", overwrite = "true", input= pdensityfilt, output = pneighfilt, method = "sum", size = boxsize, weight = weight_file)
+                grass.run_command("r.neighbors", overwrite = "true", input= pdensityunf, output = pneighunf, method = "sum", size = boxsize, weight = weight_file)
                 if(year == 'ym4'):
                         str_formula = "3.71 * ( A / B )^1.3455"
                 elif(year == 'yr4'):
@@ -68,23 +102,40 @@ def main():
                         str_formula = "A / B"
                 grass.run_command("r.mapcalculator", overwrite = "true", amap = pneighfilt, bmap = pneighunf, formula = str_formula, outfile = lpi)	
                 str_formula = "if( A > 1.0, 1.0, A)"
-                grass.run_command("r.mapcalculator", overwrite = "true", amap =  lpi, formula = str_formula, outfile = lpi)	
-                grass.message("finished creating "+lpi+" at "+str(dt.datetime.now()))
+                #grass.run_command("r.mapcalculator", overwrite = "true", amap =  lpi, formula = str_formula, outfile = lpi)	
+                printout("finished creating "+lpi,lf)
                 
         # Copy/rename each weight to their respective months
         for month,weight in month_weights.items():
                 wlpi = lpipref + "w"+str(weight)
-                mlpi = lpipref+"m"+str(month).zfill(2)
-                str_rasts = wlpi+","+mlpi
-                grass.message("Copying "+wlpi+" to "+mlpi+" at "+str(dt.datetime.now()))
+                monthlpi = lpipref+"m"+str(month).zfill(2)
+                str_rasts = wlpi+","+monthlpi
+                grass.message("Copying "+wlpi+" to "+monthlpi+" at "+str(dt.datetime.now()))
                 grass.run_command("g.copy",overwrite = "true",rast = str_rasts)
         
-        r2end = dt.datetime.now()
-        grass.message("DONE with LPI Calculations at "+str(r2end))
-        grass.message("--------------------------------------")
-
-	sys.exit("FINISHED.")
+        # Finish
+        set_region('default',C)
+        
+        L2end = dt.datetime.now()
+        L2endtime = dt.datetime.strftime(L2end,"%m-%d %H:%M:%S")
+        L2processingtime = L2end - L2start
+        printout('END  at '+ L2endtime+ ', processing time: '+str(L2processingtime),lf)
+        printout("DONE with LPI Calculations",lf)
+        printout("--------------------------------------",lf)
+    sys.exit("FINISHED.")
 
 if __name__ == "__main__":
-	#options, flags = grass.parser()
-	main()
+    main()
+    '''
+        try:
+                #options, flags = grass.parser()
+                main()
+        except:
+                printout('ERROR! quitting.')
+                print traceback.print_exc()
+                traceback.print_exc(file=lf)
+                
+        finally:
+                lf.close()
+                sys.exit("FINISHED.")
+    '''
