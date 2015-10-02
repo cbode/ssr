@@ -31,25 +31,25 @@ algore_run = 0
 # GENERAL PARAMETERS
 # GRASS GIS requires 4 inputs to start: 
 # GIS BASE (GISBASE): path to GRASS binaries. Set automatically in ssr_utilities.py
-gisbase = '/usr/lib64/grass-6.4.1'		# Ios: Grass 6.4.1 from RPM
+gisbase = '/usr/lib64/grass-6.4.4'		# Ios: Grass 6.4.1 from RPM
 # DATABASE (GISDBASE): A directory (folder) on disk to contain all GRASS maps and data. 
 #                     Set automatically in ssr_utilities.py
-gisdbase = '/local/collin_light/'               # Ios: local drive
+gisdbase = '/data/grass_workspace'               # Eddy-the-server: GRASS GIS workspace
 # LOCATION (loc): This is the name of a geographic location. It is defined by a
 #          co-ordinate system and a rectangular boundary.  This is the name of the directory.
-loc = location = 'sfk2m'                     
+loc = location = 'angelo_b8k'                     
 
 # MAPSET:   Each GRASS session runs under a particular MAPSET. This consists of
 #          a rectangular REGION and a set of maps. See bottom of params for mapsets.
 
-C = '2' #'30'                         # cell size in meters
+C = '30' #'2'                         # cell size in meters
 P = loc+C+'m'                   
 bregion = 'b8k'		        # boundary used in g.region: b5k,b8k,b10,default
 pref = bregion + C + 'm'        # used as name prefix when g.region is not default
 
 # INPUT RASTERS
-demsource = 'sfk1mdem'
-cansource = 'sfk1mcan'
+demsource = 'angelo_y14c1mdem'
+cansource = 'angelo_y14c1mcan'
 
 #----------------------------------------------------------------------------
 # SSR2: R.HORIZON PARAMETERS
