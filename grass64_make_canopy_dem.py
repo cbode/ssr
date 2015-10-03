@@ -41,7 +41,7 @@ loc = location = 'angelo_b8k'
 
 # MAPSET:   Each GRASS session runs under a particular MAPSET. This consists of
 #          a rectangular REGION and a set of maps. See bottom of params for mapsets.
-C = 1 #'30' #'2'                         # cell size in meters
+C = '1' #'30' #'2'                         # cell size in meters
 P = loc+C+'m'                   
 bregion = 'b8k'		        # boundary used in g.region: b5k,b8k,b10,default
 pref = bregion + C + 'm'        # used as name prefix when g.region is not default
@@ -71,23 +71,65 @@ vegheight = P + 'vegheight'  # vegetation height
 
 #----------------------------------------------------------------------------
 # MAPSETS 
-mhorizon = bregion+'_horizon'          # horizon mapset
-msun = 'sun_'+bregion+'_'+calib        # r.sun mapset using calibration
 mlpi = 'lpi'                           # lpi mapset  
-mssr = 'ssr_'+bregion+'_'+algore       # ssr output mapset 
 
 
 # MODULES
 # GRASS & SSR environment setup for external use
 import os
 import sys
+import re
+import shutil
+import platform
+import datetime as dt
 gisdbase = os.path.abspath(gisdbase)
 os.environ['GISBASE'] = gisbase
 sys.path.append(os.path.join(os.environ['GISBASE'], "etc", "python"))
 import grass.script as grass
 import grass.script.setup as gsetup
 # ssr_utilities must go after grass.script imports
-from ssr_utilities import *
+#from ssr_utilities import *
+
+def printout(str_text,lf):
+    timestamp = dt.datetime.strftime(dt.datetime.now(),"%H:%M:%S")
+    lf.write(timestamp+": "+str_text+'\n')
+    print timestamp+": "+str_text
+
+def mapset_gotocreate(mapset,bregion,C,lf):
+    #grass.run_command("g.mapset","l")
+    bmapexists = False
+    mapset_list = grass.mapsets(False) 
+    for map in mapset_list:
+        grass.message(map)
+        if(mapset == map):
+            bmapexists = True
+            #grass.message("FOUND! "+mapset+" = "+map)
+    if(bmapexists == True):
+        grass.run_command("g.mapset",mapset=mapset)
+        printout('Changed mapsets to '+mapset,lf)
+    else:  
+        grass.run_command("g.mapset",flags="c",mapset=mapset)
+        printout("Mapset didn't exist. Created then changed mapsets to "+mapset,lf)
+    set_region(bregion,C)
+
+def set_region(bregion,C):
+    # remove g.region for normal runs
+    if(bregion == "default"):
+        grass.run_command("g.region", flags="d")            
+    elif(bregion == "b5k"):
+        grass.run_command("g.region", n=4400220.4, s=4395220.4, e=447761.8, w=442761.8,ewres=C,nsres=C) # b5k
+    elif(bregion == "b8k"):
+        grass.run_command("g.region", n=4400800.00, s=4392800.00, e=451000.00, w=443000.00,ewres=C,nsres=C) #b8k
+    elif(bregion == "b9k"):
+        grass.run_command("g.region", n=4401000.00, s=4392000.00, e=451000.00, w=442000.00,ewres=C,nsres=C) #b9k
+    elif(bregion == "b10k"):
+        grass.run_command("g.region", n=4401000.00, s=4391000.00, e=450000.00, w=440000.00,ewres=C,nsres=C) # b10k
+    elif(bregion == "cahto"):
+        grass.run_command("g.region", n=4398000.00, s=4392000.00, e=451000.00, w=448000.00,ewres=C,nsres=C) # cahto
+    else:
+        grass.run_command("g.region", flags="d")
+        grass.run_command("g.region",ewres=C,nsres=C)
+
 
 def main():
     gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
@@ -104,12 +146,11 @@ def main():
     printout('pref: '+pref,lf)
     printout('LPI mapset: '+mlpi,lf)
     printout("Point Cloud Path: "+inPath,lf)
-    printout("Point Cloud Ground,Total Directories: "+LidarPoints,lf)
     printout("Point Cloud ",lf)
-    printout("Point Cloud File Prefix: "+pmax_pref,lf)
+    printout("Point Cloud File Prefix: "+pmaxpref,lf)
     printout("Point Cloud File Suffix: "+inSuffix,lf)
     printout("Point Cloud File Separator: "+sep,lf)
-    printout("Point Cloud Tile Overlap (meters): "+overlap,lf)
+    printout("Point Cloud Tile Overlap (meters): "+str(overlap),lf)
 
     printout('_________________________________',lf)
 	
@@ -121,9 +162,12 @@ def main():
     mapset_gotocreate(mlpi,'default',C,lf)
 
     #################################################
+    patch_list = ''
+    i = 0
     for strFile in os.listdir(inPath):
-        #print "checking "+strFile
+        printout("checking "+strFile,lf)
         t = strFile.split('.')
+	#printout("t[0]="+t[0]+", t[1] = "+t[1],lf)
         if(len(t) > 1 and t[1] == inSuffix):
             tile=t[0]
             fstart = dt.datetime.now()
@@ -156,19 +200,18 @@ def main():
                 patch_list = ctile
             else:
                 patch_list += ","+ctile
+            i = i + 1
                 
-        # Mosaic all the tiles into one map
-        grass.run_command("g.region", flags = "d") # go back to default mapset
-        pointdensity = pmaxpref+pref
-        grass.run_command("r.patch", overwrite = "true", input = patch_list, output= pointdensity)
-        '''
-        # Delete the clipped tiles, leaving only a completed point densitymap
-        ctile_list = patch_list.split(',')
-        for ctile in ctile_list:
-            grass.run_command("g.remove", flags = "f", rast = ctile)
-        '''    
-        printout("Done with "+pref,lf)
-        exit()
+    # Mosaic all the tiles into one map
+    printout("Mosaic all tiles into one map",lf)
+    grass.run_command("g.region", flags = "d") # go back to default mapset
+    pointdensity = pmaxpref+pref
+    grass.run_command("r.patch", overwrite = "true", input = patch_list, output= pointdensity)
+    # Delete the clipped tiles, leaving only a completed point densitymap
+    ctile_list = patch_list.split(',')
+    for ctile in ctile_list:
+        grass.run_command("g.remove", flags = "f", rast = ctile)
+    printout("Done with "+pref,lf)
     
     
     #################################################
