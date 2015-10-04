@@ -174,6 +174,7 @@ def main():
             printout("Importing: "+strFile+" as "+tile,lf)
             # n=4399092 s=4396972 e=446782 w=444662 b=365 t=754
             str_boundary = grass.read_command("r.in.xyz", flags = "sg", input = inPath+strFile, fs = sep, output = "temp")
+            printout("boundary: "+str_boundary,lf)
             boundary = str_boundary.split(' ')
             tn = (boundary[0].split('='))[1]
             ts = (boundary[1].split('='))[1]
@@ -182,7 +183,9 @@ def main():
             tb = (boundary[4].split('='))[1]
             tt = (boundary[5].split('='))[1]
             grass.run_command("g.region", overwrite = "true", n=tn, s=ts, e=te, w=tw, b=tb, t=tt)
+            printout("set region to boundary",lf)
             grass.run_command("r.in.xyz", overwrite = "true", input = inPath+strFile, output = tile,type="FCELL", fs= sep, method="max")
+            printout("r.in.xyz import finished for "+tile,lf)
             
             # clip tile, remove overlap
             otn = float(tn) - overlap
@@ -190,10 +193,13 @@ def main():
             ote = float(te) - overlap
             otw = float(tw) + overlap
             grass.run_command("g.region", n = otn, s = ots, w = otw, e = ote)
+            printout("set region to clip",lf)
             
             ctile = 'c'+tile
             grass.run_command("r.mapcalc", overwrite = "true", expression = ctile+" = float("+tile+")")
+            printout("clipped "+tile,lf)
             grass.run_command("g.remove", flags = "f", rast = tile)
+            printout("deleted unclipped tile, "+tile,lf)
             
             # append list of tiles to merge
             if(i == 0):
@@ -201,6 +207,7 @@ def main():
             else:
                 patch_list += ","+ctile
             i = i + 1
+            printout("Finished importing XYZ tiles!",lf)
                 
     # Mosaic all the tiles into one map
     printout("Mosaic all tiles into one map",lf)
