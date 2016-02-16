@@ -37,7 +37,7 @@ def printout(str_text,lf):
 
 def set_region(bregion,C):
     # remove g.region for normal runs
-    if(bregion == "default"):
+    if(bregion == "default" or bregion == "d"):
         grass.run_command("g.region", flags="d")            
     elif(bregion == "b5k"):
         grass.run_command("g.region", n=4400220.4, s=4395220.4, e=447761.8, w=442761.8,ewres=C,nsres=C) # b5k
@@ -76,7 +76,7 @@ def mapset_gotocreate(mapset,bregion,C,lf):
 #   of a GRASS session.  Python is started from command line.
 #
 ###############################################################
-
+'''
 def set_server_environment(lf): # OUTSIDE
     server_name = platform.uname()[1]
     if(server_name == 'ios.safl.umn.edu'):
@@ -100,7 +100,7 @@ def set_server_environment(lf): # OUTSIDE
         exit()
     sys.path.append(os.path.join(os.environ['GISBASE'], "etc", "python"))
     return gisbase,gisdbase
-
+'''
 
 def create_temp(cores,bregion,lf): # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, 'PERMANENT')

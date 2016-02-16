@@ -47,7 +47,7 @@ from ssr_utilities import *
 
 # FUNCTIONS
 def preprocessing(mapset,ow):
-        gsetup.init(gisbase, gisdbase, loc, mapset)
+        gsetup.init(gisbase, gisdbase, location, mapset)
         set_region(bregion,C)
 	
 	# Regrid from Input Raster to Target Cell size
@@ -72,7 +72,7 @@ def preprocessing(mapset,ow):
 
 def worker_sun(cpu,julian_seed,step,demr,ow):
         mtemp = 'temp'+str(cpu).zfill(2)
-        gsetup.init(gisbase, gisdbase, loc, mtemp)
+        gsetup.init(gisbase, gisdbase, location, mtemp)
         set_region(bregion,C)
 
         # Input Maps
@@ -88,11 +88,11 @@ def worker_sun(cpu,julian_seed,step,demr,ow):
                 day = str(doy).zfill(3)
                 linke = linke_interp(doy,linke_array)
                 # Output maps
-                beam = pref+demr+day+'beam'
-                diff = pref+demr+day+'diff'
-                refl = pref+demr+day+'refl'
-                dur = pref+demr+day+'dur'
-                #glob = pref+demr+day+'glob'
+                beam = P+demr+day+'beam'
+                diff = P+demr+day+'diff'
+                refl = P+demr+day+'refl'
+                dur = P+demr+day+'dur'
+                #glob = P+demr+day+'glob'
                 grass.run_command("r.sun", flags="s", elevin=elevdem, albedo=albedo, \
                                   horizonstep=hstep, \
                                   beam_rad=beam, insol_time=dur, \
@@ -139,12 +139,12 @@ def main():
         lf = open('rsun_'+tlog+'.log', 'a')
         
         printout("STARTING R.SUN MODELING RUN",lf)
-        printout("LOCATION: "+loc,lf)
+        printout("LOCATION: "+location,lf)
         printout("HORIZONS: NOT USED. JUST DOING -S ON THE FLY",lf)
         printout("This computer has "+str(cores)+" CPU cores.",lf)
         printout("Source DEM: "+demsource,lf)
         printout("Source CAN: "+cansource,lf)
-        printout('pref: '+pref,lf)
+        printout('Prefix: '+P,lf)
         printout('dem: '+dem,lf)
         printout('can: '+can,lf)
         #printout('horizon mapset: '+mhorizon,lf)

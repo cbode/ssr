@@ -37,13 +37,13 @@ gisbase = '/usr/lib64/grass-6.4.4'		# Ios: Grass 6.4.1 from RPM
 gisdbase = '/data/grass_workspace'               # Eddy-the-server: GRASS GIS workspace
 # LOCATION (loc): This is the name of a geographic location. It is defined by a
 #          co-ordinate system and a rectangular boundary.  This is the name of the directory.
-loc = location = 'angelo_b8k'                     
+loc = location = 'angelo2014'                     
 
 # MAPSET:   Each GRASS session runs under a particular MAPSET. This consists of
 #          a rectangular REGION and a set of maps. See bottom of params for mapsets.
 C = '1' #'30' #'2'              # cell size in meters
 P = loc+C+'m'                   
-bregion = 'b8k'		        # boundary used in g.region: b5k,b8k,b10,default
+bregion = 'default'		        # boundary used in g.region: b5k,b8k,b10,default
 pref = bregion + C + 'm'        # used as name prefix when g.region is not default
 	
 #----------------------------------------------------------------------------
