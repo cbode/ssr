@@ -21,35 +21,28 @@
 
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
-preprocessing_run = 0
+preprocessing_run = 1
 rsun_run = 0
-lidar_run = 2
+lidar_run = 0
 lpi_run = 0
 algore_run = 0
 
 #----------------------------------------------------------------------------
 # GENERAL PARAMETERS
 # GRASS GIS requires 4 inputs to start: 
-# GIS BASE (GISBASE): path to GRASS binaries. Set automatically in ssr_utilities.py
-gisbase = '/usr/lib64/grass-6.4.4'		# Ios: Grass 6.4.1 from RPM
-# DATABASE (GISDBASE): A directory (folder) on disk to contain all GRASS maps and data. 
-#                     Set automatically in ssr_utilities.py
-gisdbase = '/data/grass_workspace'               # Eddy-the-server: GRASS GIS workspace
-# LOCATION (loc): This is the name of a geographic location. It is defined by a
-#          co-ordinate system and a rectangular boundary.  This is the name of the directory.
-loc = location = 'angelo_b8k'                     
-
-# MAPSET:   Each GRASS session runs under a particular MAPSET. This consists of
-#          a rectangular REGION and a set of maps. See bottom of params for mapsets.
-
-C = '30' #'2'                         # cell size in meters
+gisbase = '/usr/lib64/grass-6.4.4'  # GIS BASE (GISBASE): path to GRASS binaries.
+gisdbase = '/data/grass_workspace'  # DATABASE (GISDBASE): directory containing all GRASS layers. 
+location = loc = 'angelo2014'       # LOCATION: defined by coordinate system & bounding box.                     
+mapset = 'PERMANENT'                # MAPSET: each GRASS session runs under a unique MAPSET. PERMANENT is default.
+# Naming Parameters
+C = '1'                             # cell size in meters
 P = loc+C+'m'                   
-bregion = 'b8k'		        # boundary used in g.region: b5k,b8k,b10,default
+bregion = 'default'		        # boundary used in g.region: b5k,b8k,b10,default
 pref = bregion + C + 'm'        # used as name prefix when g.region is not default
 
 # INPUT RASTERS
-demsource = 'angelo_y14c1mdem'
-cansource = 'angelo_y14c1mcan'
+demsource = 'dem'
+cansource = 'can'
 
 #----------------------------------------------------------------------------
 # SSR2: R.HORIZON PARAMETERS
