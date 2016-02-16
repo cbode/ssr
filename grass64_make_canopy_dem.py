@@ -41,17 +41,13 @@ loc = location = 'angelo_b8k'
 
 # MAPSET:   Each GRASS session runs under a particular MAPSET. This consists of
 #          a rectangular REGION and a set of maps. See bottom of params for mapsets.
-C = '1' #'30' #'2'                         # cell size in meters
+C = '1' #'30' #'2'              # cell size in meters
 P = loc+C+'m'                   
 bregion = 'b8k'		        # boundary used in g.region: b5k,b8k,b10,default
 pref = bregion + C + 'm'        # used as name prefix when g.region is not default
-
-# INPUT RASTERS
-demsource = 'angelo20141mdem'
-cansource = 'angelo20141mcan'
-
+	
 #----------------------------------------------------------------------------
-# SSR4: LIDAR IMPORT PARAMETERS
+# LIDAR IMPORT PARAMETERS
 # LiDAR downloaded from http://opentopography.org.
 # National Center for Airborne Laser Mapping (NCALM) distributes laser hits as 2 datasets:  total and ground filtered.
 year = 'y14'	        # Year the LiDAR was flown 2004 'y04', 2004 modified to match y09 'ym4',2009 'y09'
@@ -60,8 +56,8 @@ inPath='/data/source/LiDAR/2014_EelBathymetry_LiDAR/Angelo/Tiles_ASCII_xyz/unfil
 #inPath='/data/source/LiDAR/2004_SFEel_LiDAR/TerraScan_EEL/laser_export/all/'           # y04
 inSuffix='xyz'                          # filename suffix to filter for
 sep = ','				# separator in lidar files ' ' or ','
-overlap = 0.00				# tile overlap in meters
-pmaxpref = 'pmax_c'+str(C)+year	# prefix to the point rasters
+overlap = float(0.00)			# tile overlap in meters
+pmaxpref = 'pmax_c'+str(C)+year		# prefix to the point rasters
 
 #----------------------------------------------------------------------------
 # MAP NAMES
@@ -71,7 +67,7 @@ vegheight = P + 'vegheight'  # vegetation height
 
 #----------------------------------------------------------------------------
 # MAPSETS 
-mlpi = 'lpi'                           # lpi mapset  
+mapset = 'canopy'                           # lpi mapset  
 
 
 # MODULES
@@ -196,10 +192,13 @@ def main():
             printout("set region to clip",lf)
             
             ctile = 'c'+tile
-            grass.run_command("r.mapcalc", overwrite = "true", expression = ctile+" = float("+tile+")")
-            printout("clipped "+tile,lf)
-            grass.run_command("g.remove", flags = "f", rast = tile)
-            printout("deleted unclipped tile, "+tile,lf)
+            grass.run_command("g.rename",rast=tile+","+ctile)
+            #grass.run_command("r.mapcalc", overwrite = "true", expression = ctile+" = "+tile)
+            #printout("clipped "+tile,lf)
+
+	    # delete unclipped tile
+            #grass.run_command("g.remove", flags = "f", rast = tile)
+            #printout("deleted unclipped tile, "+tile,lf)
             
             # append list of tiles to merge
             if(i == 0):
