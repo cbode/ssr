@@ -5,8 +5,6 @@
 # AUTHOR:       Collin Bode, UC Berkeley
 #               modified from r.out.xyz
 # PURPOSE:
-# 	1. Accept xyz LiDAR files (filtered & unfiltered) and import them into GRASS gis as raster.
-#   	        This assumes filenames include an indicator that allows you to match filtered to unfiltered.
 # 	2. Calculate point density using an asymetric nearest neighbor box.
 # 	3. Calculate LPI as the ratio of filtered to unfiltered.
 #
@@ -45,7 +43,7 @@ def main():
     ##################################
     # Open log file
     tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
-    lf = open('rsun_'+tlog+'.log', 'a')
+    lf = open(gisdbase+'/rsun_'+tlog+'.log', 'a')
     #mlpi = 'lpi'    # <-- debug remove
     
     printout("STARTING LPI RUN",lf)
@@ -71,7 +69,7 @@ def main():
         weight_num = 4
         weight_name = 'lpi_box18x18_weight'
         month_weights = {1:1, 2:2, 3:2, 4:3, 5:4, 6:4, 7:4, 8:3, 9:3, 10:2, 11:2, 12:1}
-        scriptPath = gisdbase+'/scripts/' 
+        scriptPath = get_path()
 
         printout("R2 Starting LPI Calculation using size("+str(boxsize)+")",lf)
 
@@ -102,7 +100,7 @@ def main():
                         str_formula = "A / B"
                 grass.run_command("r.mapcalculator", overwrite = "true", amap = pneighfilt, bmap = pneighunf, formula = str_formula, outfile = lpi)	
                 str_formula = "if( A > 1.0, 1.0, A)"
-                #grass.run_command("r.mapcalculator", overwrite = "true", amap =  lpi, formula = str_formula, outfile = lpi)	
+                grass.run_command("r.mapcalculator", overwrite = "true", amap =  lpi, formula = str_formula, outfile = lpi)	
                 printout("finished creating "+lpi,lf)
                 
         # Copy/rename each weight to their respective months

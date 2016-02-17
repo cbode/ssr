@@ -102,6 +102,10 @@ def set_server_environment(lf): # OUTSIDE
     return gisbase,gisdbase
 '''
 
+def get_path():
+    os.path.dirname(os.path.realpath(__file__))
+    return path
+
 def create_temp(cores,bregion,lf): # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
         for count in range(0,cores,1):

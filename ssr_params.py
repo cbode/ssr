@@ -21,11 +21,11 @@
 
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
-preprocessing_run = 1
-rsun_run = 0
-lidar_run = 0
-lpi_run = 0
-algore_run = 0
+lidar_run = 2           # Imports point cloud as canopy and point density rasters
+preprocessing_run = 2   # Creates derivative GIS products slope, aspect, tree height, albedo
+rsun_run = 0            # Runs GRASS light model, r.sun
+lpi_run = 0             # Creates Light Penetration Index (LPI) from point cloud
+algore_run = 0          # Algorithm for combining all the parts into the SRR
 
 #----------------------------------------------------------------------------
 # GENERAL PARAMETERS
@@ -41,7 +41,7 @@ bregion = 'd'                       # boundary used in g.region: b5k,b8k,b10, d 
 
 # INPUT RASTER NAMES
 demsource = 'angelo2014dem'
-cansource = 'angelo2014can'
+cansource = ''                     # If you do not have a canopy raster, leave this empty '' and ssr_lidar.py will create it automatically.
 
 #----------------------------------------------------------------------------
 # MAP NAMES
@@ -56,6 +56,22 @@ vegheight = P + 'vegheight'      # vegetation height
 albedo = P + 'albedo'            # albedo by vegtype
 demhor = P + 'demhor'            # horizon, bare-earth
 canhor = P + 'demhor'            # horizon, canopy
+
+#----------------------------------------------------------------------------
+# SSR1: LIDAR IMPORT PARAMETERS
+# LiDAR downloaded from http://opentopography.org.
+# National Center for Airborne Laser Mapping (NCALM) distributes laser hits as 2 datasets:  total and ground filtered.
+# Version 1.0 only processes ASCII files with ground filtered exported to a separate directory.  Future versions will 
+# use .las files in a single directory.
+year = 'y014'	        		            # Year the LiDAR was flown 2004 'y04', 2004 modified to match y09 'ym4',2009 'y09'
+pdensitypref = 'pointdensity_c'+str(C)+year	    # prefix to the point density rasters
+inSuffix='xyz'                                      # filename suffix to filter for
+overlap = float(0.00)				    # tile overlap in meters  10.00 m (y04,y09), 0.00 m (y14)
+sep = ','				            # separator in lidar files ' ' or ','
+LidarPoints = [ 'filtered' , 'unfiltered' ]         # subdirectories under inPath.  y04 = [ 'ground' , 'all' ]
+inPath='/data/source/LiDAR/2014_EelBathymetry_LiDAR/Angelo/Tiles_ASCII_xyz/'
+#inPath='/data/source/LiDAR/2009_SFEel_LiDAR/ascii/'
+#inPath='/data/source/LiDAR/2004_SFEel_LiDAR/TerraScan_EEL/laser_export/'
 
 #----------------------------------------------------------------------------
 # SSR2: R.HORIZON PARAMETERS
@@ -75,32 +91,16 @@ timestep = '0.1'                # 0.1 decimal hour = 6 minute timestep, default 
 calib = 'hd'                    # r.sun calibration code:  'hd' = 0.50 * Diffuse, 1.0 * Direct, reflection is ignored.
                                 # calibration needs to be moved to algore script
 #----------------------------------------------------------------------------
-# SSR4: LIDAR IMPORT PARAMETERS
-# LiDAR downloaded from http://opentopography.org.
-# National Center for Airborne Laser Mapping (NCALM) distributes laser hits as 2 datasets:  total and ground filtered.
-# Version 1.0 only processes ASCII files with ground filtered exported to a separate directory.  Future versions will 
-# use .las files in a single directory.
-year = 'y014'	        		            # Year the LiDAR was flown 2004 'y04', 2004 modified to match y09 'ym4',2009 'y09'
-pdensitypref = 'pointdensity_c'+str(C)+year	    # prefix to the point density rasters
-inSuffix='xyz'                                      # filename suffix to filter for
-overlap = float(0.00)				    # tile overlap in meters  10.00 m (y04,y09), 0.00 m (y14)
-sep = ','				            # separator in lidar files ' ' or ','
-LidarPoints = [ 'filtered' , 'unfiltered' ]         # subdirectories under inPath.  y04 = [ 'ground' , 'all' ]
-inPath='/data/source/LiDAR/2014_EelBathymetry_LiDAR/Angelo/Tiles_ASCII_xyz/'
-#inPath='/data/source/LiDAR/2009_SFEel_LiDAR/ascii/'
-#inPath='/data/source/LiDAR/2004_SFEel_LiDAR/TerraScan_EEL/laser_export/'
-
-#----------------------------------------------------------------------------
-# SSR5: LPI PARAMETERS
+# SSR4: LPI PARAMETERS
 #Radius = 8				# Previous radius was 8, but that is actually 8 cells per side * 2meters per cell = 32 meters, and actually I used 31x31 cell square.
 boxsize = '17'                          # Size is cell size of box for r.neighbors.  This is different than the actual box (9 cells x 2 meter cells = 18 meters)
 lpipref = 'lpi_c'+C+year+'s'+boxsize   # add the month to the end, e.g. lpi_c2y09s17m10
 
 #----------------------------------------------------------------------------
-# SSR6: ALGORE PARAMETERS
+# SSR5: ALGORE PARAMETERS
 maxheight = '2'   			    # Vegetation height after which canopy is set to null
 #halfdiff = True                            # Reduces the r.sun diffuse output by half. suffix 'half' on diffuse and global maps
-keeptemp = True				    # Testing only. Should be false for production.
+keeptemp = False				    # Testing only. Should be false for production.
 lpivsjune = False                           # Analysis only. Uses June LPI only
 sky = 'cs'				    # cs 'clear sky' or rs 'real sky' which includes cloudiness index.
 algore = 'gl'		                    # Options: 'pl' = Power Law, 'nl' = Natural Log, 'd' for old default value of 1, 
@@ -109,12 +109,6 @@ algore = 'gl'		                    # Options: 'pl' = Power Law, 'nl' = Natural L
                                             # 'gl' = Gendron linear.  no normalization.  It overestimates field radiation. Diffuse =  0.01719 + 1.024 * LPI
                                             #        Calibration of r.sun values is now handled seperately and should not be included here.
  
-#if(halfdiff == True):
-#    output_mapset = output_mapset+'_halfdiff'
-# Map prefixes
-#?dem = bregion + cell + 'mdem'
-#?can = bregion + cell + 'mcan'
-
 #----------------------------------------------------------------------------
 # MAPSETS 
 mhorizon = bregion+'_horizon'          # horizon mapset

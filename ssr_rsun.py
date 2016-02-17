@@ -8,10 +8,11 @@
 # PURPOSE:      Run the entire sequence of processing for the r.sun model.
 #               Threads a process per core for multicore processors (poor
 #               man's multithreading).
+#               NOTE: run ssr_lidar.py first!
 #
 # SOURCE MAPS:  bare-earth dem and canopy dem.  all else is calculated from them.
 #
-# DEPENDENCIES: ssr_params.py, ssr_utilities.py, GRASS GIS
+# DEPENDENCIES: ssr_params.py, ssr_lidar.py, ssr_utilities.py, GRASS GIS
 #
 # COPYRIGHT:    (c) 2012 Collin Bode
 #               This program is free software under the GNU General Public
@@ -53,7 +54,7 @@ def preprocessing(mapset,ow):
 	# Regrid from Input Raster to Target Cell size
 	if(demsource != dem):
 		grass.run_command("r.resample",input=demsource,output=dem,overwrite=ow)
-	if(demsource != dem):
+	if(cansource != can):
 		grass.run_command("r.resample",input=cansource,output=can,overwrite=ow)
 	
         # Slope and Aspect
@@ -215,6 +216,8 @@ def main():
 		R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")
 		R3processingtime = R3end - R3start
 		printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime),lf)
+	# Done
+	printout('ssr_rsun.py done',lf)
 	lf.close()
                 
 
@@ -228,6 +231,6 @@ if __name__ == "__main__":
                 traceback.print_exc(file=lf)
                 
         finally:
-                lf.close()
+                #lf.close()
                 sys.exit("FINISHED.")
 
