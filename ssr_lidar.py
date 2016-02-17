@@ -8,6 +8,7 @@
 # 	1. Accept xyz LiDAR files (filtered & unfiltered) and import them into GRASS gis as raster.
 #   	        This assumes filenames include an indicator that allows you to match filtered to unfiltered.
 # 	2. Calculate point density using an asymetric nearest neighbor box.
+#       3. Calculate Canopy raster using point maximum.
 #
 # COPYRIGHT:    (c) 2011 Collin Bode
 #		(c) 2006 Hamish Bowman, and the GRASS Development Team
@@ -50,7 +51,7 @@ def main():
     printout("STARTING LPI RUN",lf)
     printout("LOCATION: "+loc,lf)
     printout("LiDAR year: "+year,lf)
-    printout('pref: '+pref,lf)
+    printout('Prefix: '+P,lf)
     printout("LPI pref: "+lpipref,lf)
     printout('LPI mapset: '+mlpi,lf)
     printout("Point Cloud Path: "+inPath,lf)
