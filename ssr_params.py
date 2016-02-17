@@ -36,11 +36,11 @@ location = 'angelo2014'             # LOCATION: defined by coordinate system & b
 mapset = 'PERMANENT'                # MAPSET: each GRASS session runs under a unique MAPSET. PERMANENT is default.
 
 # Resolution and Bounding box
-C = '1'                             # cell size in meters
-bregion = 'd'                       # boundary used in g.region: b5k,b8k,b10, d = default. utilities needs to be changed for different regions.
+C = '2'                             # cell size in meters 2
+bregion = 'default'                       # boundary used in g.region: b5k,b8k,b10, d = default. utilities needs to be changed for different regions.
 
 # INPUT RASTER NAMES
-demsource = 'angelo2014dem'
+demsource = 'angelo1m2014dem'
 cansource = ''                     # If you do not have a canopy raster, leave this empty '' and ssr_lidar.py will create it automatically.
 
 #----------------------------------------------------------------------------
