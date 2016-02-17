@@ -67,7 +67,7 @@ vegheight = P + 'vegheight'  # vegetation height
 
 #----------------------------------------------------------------------------
 # MAPSETS 
-mapset = 'canopy'                           # lpi mapset  
+mapset = mlpi = 'canopy'                           # lpi mapset  
 
 
 # MODULES

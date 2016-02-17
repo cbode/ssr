@@ -21,7 +21,7 @@
 
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
-preprocessing_run = 1
+preprocessing_run = 2
 rsun_run = 0
 lidar_run = 0
 lpi_run = 0
@@ -36,12 +36,12 @@ location = 'angelo2014'             # LOCATION: defined by coordinate system & b
 mapset = 'PERMANENT'                # MAPSET: each GRASS session runs under a unique MAPSET. PERMANENT is default.
 
 # Resolution and Bounding box
-C = '1'                             # cell size in meters
-bregion = 'd'                       # boundary used in g.region: b5k,b8k,b10, d = default. utilities needs to be changed for different regions.
+C = '2'                             # cell size in meters 2
+bregion = 'default'                       # boundary used in g.region: b5k,b8k,b10, d = default. utilities needs to be changed for different regions.
 
 # INPUT RASTER NAMES
-demsource = 'angelo2014dem'
-cansource = 'angelo2014can'
+demsource = 'angelo1m2014dem'
+cansource = 'angelo1m2014can'
 
 #----------------------------------------------------------------------------
 # MAP NAMES

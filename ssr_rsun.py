@@ -46,7 +46,7 @@ from ssr_utilities import *
 
 
 # FUNCTIONS
-def preprocessing(mapset,ow):
+def preprocessing(localpath,mapset,ow):
         gsetup.init(gisbase, gisdbase, location, mapset)
         set_region(bregion,C)
 	
@@ -55,7 +55,7 @@ def preprocessing(mapset,ow):
 		grass.run_command("r.resample",input=demsource,output=dem,overwrite=ow)
 	if(demsource != dem):
 		grass.run_command("r.resample",input=cansource,output=can,overwrite=ow)
-	
+
         # Slope and Aspect
         grass.run_command("r.slope.aspect", elevation=dem, slope=sloped, \
                           aspect=aspectd, prec="float", zfactor=1, overwrite=ow)
@@ -65,10 +65,10 @@ def preprocessing(mapset,ow):
         # Vegetation height
         grass.mapcalc("$vegheight = $can - $dem", overwrite = ow, \
                       vegheight = vegheight, can = can, dem = dem)
-
         # Albedo
+	albedofile = localpath+'albedo_recode.txt'
         grass.run_command("r.recode",flags="a",input=vegheight,output=albedo,\
-                           rules=gisdbase+'/scripts/albedo_recode.txt', overwrite=ow)
+                           rules=albedofile, overwrite=ow)
 
 def worker_sun(cpu,julian_seed,step,demr,ow):
         mtemp = 'temp'+str(cpu).zfill(2)
@@ -132,7 +132,10 @@ def main():
         ##################################
         # R.SUN SOLAR MODEL
         ##################################
-        cores = mp.cpu_count() - 2
+        cores = mp.cpu_count() - 1
+	
+	# Set local file path to this script
+	localpath = os.path.dirname(os.path.realpath(__file__))+os.sep
 
 	# Open log file
         tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
@@ -164,7 +167,7 @@ def main():
                 R1starttime = dt.datetime.strftime(R1start,"%m-%d %H:%M:%S")
                 printout('START PREPROCESSING at '+ str(R1starttime),lf)
 
-                preprocessing('PERMANENT',int(preprocessing_run - 1))
+                preprocessing(localpath,'PERMANENT',int(preprocessing_run - 1))
 
                 R1end = dt.datetime.now()
                 R1endtime = dt.datetime.strftime(R1end,"%m-%d %H:%M:%S")
@@ -215,7 +218,7 @@ def main():
 		R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")
 		R3processingtime = R3end - R3start
 		printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime),lf)
-	lf.close()
+	#lf.close()
                 
 
 if __name__ == "__main__":
