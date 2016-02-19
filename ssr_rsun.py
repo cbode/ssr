@@ -50,12 +50,32 @@ from ssr_utilities import *
 def preprocessing(localpath,mapset,ow):
         gsetup.init(gisbase, gisdbase, location, mapset)
         set_region(bregion,C)
-	
-	# Regrid from Input Raster to Target Cell size
-	if(demsource != dem):
-		grass.run_command("r.resample",input=demsource,output=dem,overwrite=ow)
-	if(cansource != can):
-		grass.run_command("r.resample",input=cansource,output=can,overwrite=ow)
+        
+        # Check to see if canopy raster exists, and if so, which
+        print "checking existance of canopy rasters"
+        boocan = False #raster_exists(can,mapset)
+        print "boocan: ",boocan
+        #boocansource = raster_exists(cansource,mapset)
+        boocansource = True
+        print "boocansource: ",boocansource
+        if(boocan == True and boocansource == False):
+      cansource = can
+print 'cansource now = can'
+printout("LiDAR derived canopy raster exists. using "+can,lf)
+   elif(boocan == False and boocansource == False):
+            str_error = "Canopy raster does not exist. Please run ssr_lidar.py first"
+       printout(str_error,lf)
+            sys.exit(str_error)
+        else:
+                printout("Canopy source exists. using "+cansource,lf)
+   print "DONE with CAN. Starting Preprocessing."
+
+   # Regrid from Input Raster to Target Cell size
+   if(demsource != dem):
+      grass.run_command("r.resample",input=demsource,output=dem,overwrite=ow)
+   if(cansource != can):
+       if(raster_exists(can) == False):
+                grass.run_command("r.resample",input=cansource,output=can,overwrite=ow)
 
         # Slope and Aspect
         grass.run_command("r.slope.aspect", elevation=dem, slope=sloped, \
@@ -67,7 +87,7 @@ def preprocessing(localpath,mapset,ow):
         grass.mapcalc("$vegheight = $can - $dem", overwrite = ow, \
                       vegheight = vegheight, can = can, dem = dem)
         # Albedo
-	albedofile = localpath+'albedo_recode.txt'
+   albedofile = localpath+'albedo_recode.txt'
         grass.run_command("r.recode",flags="a",input=vegheight,output=albedo,\
                            rules=albedofile, overwrite=ow)
 
@@ -133,20 +153,20 @@ def main():
         ##################################
         # R.SUN SOLAR MODEL
         ##################################
-        cores = mp.cpu_count() - 1
-	
-	# Set local file path to this script
-	localpath = os.path.dirname(os.path.realpath(__file__))+os.sep
+        cores = mp.cpu_count() - 2
+   
+   # Set local file path to this script
+        localpath = get_path()
 
-	# Open log file
+   # Open log file
         tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
-        lf = open('rsun_'+tlog+'.log', 'a')
-        
+        lf = open(gisdbase+os.sep+'ssr_'+tlog+'_rsun.log', 'a')
+          
         printout("STARTING R.SUN MODELING RUN",lf)
         printout("LOCATION: "+location,lf)
         printout("HORIZONS: NOT USED. JUST DOING -S ON THE FLY",lf)
-        printout("This computer has "+str(cores)+" CPU cores.",lf)
-        printout("Source DEM: "+demsource,lf)
+        printout("This computer has "+str(cores)+" CPU cores.",lf) 
+        printout("Source DEM: "+demsource,lf) 
         printout("Source CAN: "+cansource,lf)
         printout('Prefix: '+P,lf)
         printout('dem: '+dem,lf)
@@ -161,7 +181,7 @@ def main():
         printout('start julian day: '+str(start_day),lf)
         printout('week step: '+str(week_step),lf)
         printout('_________________________________',lf)
-	
+   
         # Preprocessing
         if(preprocessing_run > 0):
                 R1start = dt.datetime.now()
@@ -176,52 +196,52 @@ def main():
                 printout('END PREPROCESSING at '+ R1endtime + ', processing time: '+str(R1processingtime),lf)
 
         # R.SUN Start
-	if(rsun_run > 0):
-		R3start = dt.datetime.now()
-		R3starttime = dt.datetime.strftime(R3start,"%m-%d %H:%M:%S")
-		printout('START  '+ R3starttime,lf)
+   if(rsun_run > 0):
+      R3start = dt.datetime.now()
+      R3starttime = dt.datetime.strftime(R3start,"%m-%d %H:%M:%S")
+      printout('START  '+ R3starttime,lf)
 
-		# Create one temp directory for each CPU core
-		printout("Creating Temporary directories, one per cpu core.",lf)
-		create_temp(cores,lf)
-		
-		# Spawn R.SUN processes
-		step = cores * week_step
-		for demr in ['dem','can']:
-			julian_seed = start_day
-			jobs = []
-			for cpu in range(0,cores):
-				p = mp.Process(target=worker_sun, args=(cpu,julian_seed,step,demr,bregion))
-				p.start()
-				jobs.append(p)
-				pid = str(p.pid)
-				printout("r.sun: dem = "+demr+" cpu = "+str(cpu)+" julian_seed = "+str(julian_seed)+" pid = "+pid,lf)
-				julian_seed += week_step
+      # Create one temp directory for each CPU core
+      printout("Creating Temporary directories, one per cpu core.",lf)
+      create_temp(cores,lf)
+      
+      # Spawn R.SUN processes
+      step = cores * week_step
+      for demr in ['dem','can']:
+         julian_seed = start_day
+         jobs = []
+         for cpu in range(0,cores):
+            p = mp.Process(target=worker_sun, args=(cpu,julian_seed,step,demr,bregion))
+            p.start()
+            jobs.append(p)
+            pid = str(p.pid)
+            printout("r.sun: dem = "+demr+" cpu = "+str(cpu)+" julian_seed = "+str(julian_seed)+" pid = "+pid,lf)
+            julian_seed += week_step
 
-			# Wait for all the Processes to finish
-			for p in jobs:
-				pid = str(p.pid)
-				palive = str(p.is_alive)
-				p.join()
-				printout(demr+" on "+pid+" joined.",lf)
-			printout("R.Sun finished for "+demr,lf)
-		
-		# Copy all the files back over to sun mapset
-		suffixes = ['glob','beam','diff','refl','dur']
-		mapset_gotocreate(msun)
-		copy_fromtemp(cores,msun,suffixes,1,lf)
+         # Wait for all the Processes to finish
+         for p in jobs:
+            pid = str(p.pid)
+            palive = str(p.is_alive)
+            p.join()
+            printout(demr+" on "+pid+" joined.",lf)
+         printout("R.Sun finished for "+demr,lf)
+      
+      # Copy all the files back over to sun mapset
+      suffixes = ['glob','beam','diff','refl','dur']
+      mapset_gotocreate(msun)
+      copy_fromtemp(cores,msun,suffixes,1,lf)
 
-		# Delete the temp mapsets
-		remove_temp(cores)
+      # Delete the temp mapsets
+      remove_temp(cores)
 
-		# Finish
-		R3end = dt.datetime.now()
-		R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")
-		R3processingtime = R3end - R3start
-		printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime),lf)
-	# Done
-	printout('ssr_rsun.py done',lf)
-	lf.close()
+      # Finish
+      R3end = dt.datetime.now()
+      R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")
+      R3processingtime = R3end - R3start
+      printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime),lf)
+   # Done
+   printout('ssr_rsun.py done',lf)
+   lf.close()
 
 if __name__ == "__main__":
         try:

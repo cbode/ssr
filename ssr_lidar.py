@@ -45,24 +45,25 @@ def main():
     ##################################
     # Open log file
     tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
-    lf = open(localpath+'rsun_'+tlog+'.log', 'a')
+    lf = open(gisdbase+os.sep+'ssr_'+tlog+'_lidar.log', 'a')
     #mlpi = 'lpi'    # <-- debug remove
     boocan = False
     if(cansource == ''):
         boocan = True
+
     printout("STARTING LPI RUN",lf)
-    printout("LOCATION: "+loc,lf)
+    printout("LOCATION: "+location,lf)
     printout("LiDAR year: "+year,lf)
     printout('Prefix: '+P,lf)
     printout("LPI pref: "+lpipref,lf)
     printout('LPI mapset: '+mlpi,lf)
-    printout("Point Cloud Path: "+inPath,lf)
-    printout("Point Cloud Ground,Total Directories: "+LidarPoints,lf)
     printout("Point Cloud ",lf)
-    printout("Point Cloud File Prefix: "+density_pref,lf)
+    printout("Point Cloud Path: "+inPath,lf)
+    printout("Point Cloud Ground,Total Directories: "+LidarPoints[0]+" , "+LidarPoints[1],lf)
+    printout("Point Cloud File Prefix: "+pdensitypref,lf)
     printout("Point Cloud File Suffix: "+inSuffix,lf)
     printout("Point Cloud File Separator: "+sep,lf)
-    printout("Point Cloud Tile Overlap (meters): "+overlap,lf)
+    printout("Point Cloud Tile Overlap (meters): "+str(overlap),lf)
     printout("Create Canopy Raster: "+str(boocan),lf)
     printout('_________________________________',lf)
 	
@@ -74,6 +75,8 @@ def main():
         # Mapset and Region Defined
         mapset_gotocreate(mlpi,'default',C,lf)
 
+        ow = int(lidar_run - 1)   # overwrite files? 0 = no, 1 = yes
+
         #################################################
         for pref in LidarPoints:
             i = 0
@@ -82,14 +85,15 @@ def main():
                 boocan = True
             else:
                 boocan = False
-            printout('Will canopy raster will be created using '+pref+'?:'+str(boocan))
+            printout('Will canopy raster will be created using '+pref+'?:'+str(boocan),lf)
             
             inDir = inPath+pref+"//"
             for strFile in os.listdir(inDir):
-                #print "checking "+strFile
+                print "checking "+strFile
                 t = strFile.split('.')
                 if(len(t) > 1 and t[1] == inSuffix):
                     tile=t[0]
+                    cantile = 'can_'+tile
                     fstart = dt.datetime.now()
                     printout("Importing: "+strFile+" as "+tile,lf)
                     # n=4399092 s=4396972 e=446782 w=444662 b=365 t=754
@@ -101,61 +105,80 @@ def main():
                     tw = (boundary[3].split('='))[1]
                     tb = (boundary[4].split('='))[1]
                     tt = (boundary[5].split('='))[1]
-                    grass.run_command("g.region", overwrite = "true", n=tn, s=ts, e=te, w=tw, b=tb, t=tt)
-                    grass.run_command("r.in.xyz", overwrite = "true", input = inDir+strFile, output = tile,type="FCELL", fs= sep, method="n")
+                    grass.run_command("g.region", overwrite = ow, n=tn, s=ts, e=te, w=tw, b=tb, t=tt)
+                    grass.run_command("r.in.xyz", overwrite = ow, input = inDir+strFile, output = tile,type="FCELL", fs= sep, method="n")
                     if(boocan == True):
-                        grass.run_command("r.in.xyz", overwrite = "true", input = inDir+strFile, output = 'can_'+tile,type="FCELL", fs= sep, method="max")
+                        grass.run_command("r.in.xyz", overwrite = ow, input = inDir+strFile, output = cantile,type="FCELL", fs= sep, method="max")
                     
-                    # clip tile, remove overlap
-                    otn = float(tn) - overlap
-                    ots = float(ts) + overlap
-                    ote = float(te) - overlap
-                    otw = float(tw) + overlap
-                    grass.run_command("g.region", n = otn, s = ots, w = otw, e = ote)
-                    
+                    # Some LiDAR Tiles overlap. These need to be clipped before merging together
                     ctile = 'c'+tile
-                    grass.run_command("r.mapcalc", overwrite = "true", expression = ctile+" = float("+tile+")")
-                    if(boocan == True):
-                        grass.run_command("r.mapcalc", overwrite = "true", expression = 'can_'+ctile+" = float("+tile+")")
-                    grass.run_command("g.remove", flags = "f", rast = tile)
+                    ccantile = 'c'+cantile
+                    if(overlap == 0):
+                        grass.run_command("g.rename",rast=tile+","+ctile)
+                        if(boocan == True):
+                            grass.run_command("g.rename",rast=cantile+","+ccantile)
+                    else:
+                        # clip tile, remove overlap
+                        otn = float(tn) - overlap
+                        ots = float(ts) + overlap
+                        ote = float(te) - overlap
+                        otw = float(tw) + overlap
+                        grass.run_command("g.region", n = otn, s = ots, w = otw, e = ote)
+                        grass.mapcalc("$ctile = float($tile)",ctile = ctile, tile = tile, overwrite = ow)
+                        grass.run_command("g.remove", flags = "f", rast = tile)
+                        if(boocan == True):
+                             grass.mapcalc("$ccantile = float($cantile)",ccantile = ccantile, cantile = cantile, overwrite = ow)
+                             grass.run_command("g.remove", flags = "f", rast = cantile)
                     
                     # append list of tiles to merge
                     if(i == 0):
                         patch_list = ctile
-                        if(boocan == True):
-                            can_patch_list = 'can_'+ctile
+                        can_patch_list = ccantile
                     else:
                         patch_list += ","+ctile
-                        if(boocan == True):
-                            can_patch_list += ","+'can_'+ctile
+                        can_patch_list += ","+ccantile
                     i += 1
-                    
+            
+            # Reset the mapset from tile size to default (with proper cell size)
+            set_region('lpi',C)
+
+            ##################
+            # Point Density Map
             # Mosaic all the tiles into one map
-            grass.run_command("g.region", flags = "d") # go back to default mapset
             pointdensity = pdensitypref+pref
-            grass.run_command("r.patch", overwrite = "true", input = patch_list, output= pointdensity)
-            if(boocan == True):
-                grass.run_command("r.patch", overwrite = "true", input = can_patch_list, output = can)
-                
+            grass.run_command("r.patch", overwrite = ow, input = patch_list, output= pointdensity)
+            printout('point density raster '+pointdensity+' has been created.',lf)
+            
             # Delete the clipped tiles, leaving only a completed point densitymap
             ctile_list = patch_list.split(',')
             for ctile in ctile_list:
                 grass.run_command("g.remove", flags = "f", rast = ctile)
-                if(boocan == True):
-                    grass.run_command("g.remove", flags = "f", rast = 'can_'+ctile)
 
-            # Move canopy raster to PERMANENT
+            ##################
+            # Canopy Map
             if(boocan == True):
-                str_rasts = can+","+can+"@PERMANENT"
-                grass.run_command("g.copy", rast = str_rasts)
-                grass.run_command("g.remove", rast = can)
-            
+                # Mosaic all the tiles into one map
+                grass.run_command("r.patch", overwrite = ow, input = can_patch_list, output = can)
+                printout('Canopy raster '+can+' has been created.',lf)
+         
+                # Delete the clipped tiles, leaving only a completed canopy map
+                ccantile_list = can_patch_list.split(',')
+                for cctile in ccantile_list:
+                    grass.run_command("g.remove", flags = "f", rast = cctile)
+
             printout("Done with "+pref,lf)
-        
-        
+
         #################################################
         # Finish
-        set_region('default',C)
+        # Reset mapset and region 
+        mapset_gotocreate('PERMANENT','default',C,lf)
+     
+        # Move canopy raster to PERMANENT
+        if(boocan == True):
+            str_rasts = can+"@"+mlpi+","+can
+            grass.run_command("g.copy", rast = str_rasts)
+            #grass.run_command("g.remove", rast = can)
+            printout('Canopy raster '+can+' moved to PERMANENT',lf)    
         
         L2end = dt.datetime.now()
         L2processingtime = L2end - L2start

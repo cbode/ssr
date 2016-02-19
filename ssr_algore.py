@@ -48,7 +48,7 @@ def main():
  
     # Open log file
     tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%Hm%M")
-    lf = open('6_algore_'+tlog+'.log', 'a')
+    lf = open('ssr_'+tlog+'_algore.log', 'a')
         
     # Print parameters
     printout('---------------------------------------')

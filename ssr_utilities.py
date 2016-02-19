@@ -70,6 +70,23 @@ def mapset_gotocreate(mapset,bregion,C,lf):
         printout("Mapset didn't exist. Created then changed mapsets to "+mapset,lf)
     set_region(bregion,C)
 
+def raster_exists(raster,mapset):
+    #boocan = raster_exists(can,'PERMANENT')
+    print '1 start'
+    booexists = False
+    print '2 list'
+    raster_list = grass.list_grouped('rast')[mapset] 
+    print '3 iteration'
+    for rast in raster_list:
+        print '4 ',rast
+        if(rast == raster):
+           booexists = True
+           print '5 found a true'
+    print '6 done with iter'
+    return booexists
+    print '7 returned'
+
+		
 ###############################################################
 #
 #   OUTSIDE FUNCTIONS:  These functions are run outside
@@ -103,8 +120,9 @@ def set_server_environment(lf): # OUTSIDE
 '''
 
 def get_path():
-    os.path.dirname(os.path.realpath(__file__))
+    path = os.path.dirname(os.path.realpath(__file__))+os.sep
     return path
+
 
 def create_temp(cores,bregion,lf): # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
@@ -117,8 +135,6 @@ def create_temp(cores,bregion,lf): # OUTSIDE
                         printout(temp+" mapset created.",lf)
                 else:
                         printout(temp+" mapset already exists. skipping...",lf)
-                
-        
 
 
 def remove_temp(cores): # OUTSIDE

@@ -43,7 +43,7 @@ def main():
     ##################################
     # Open log file
     tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
-    lf = open(gisdbase+'/rsun_'+tlog+'.log', 'a')
+    lf = open(gisdbase+os.sep+'ssr_'+tlog+'_lpi.log', 'a')
     #mlpi = 'lpi'    # <-- debug remove
     
     printout("STARTING LPI RUN",lf)

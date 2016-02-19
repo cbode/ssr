@@ -21,7 +21,7 @@
 
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
-lidar_run = 2           # Imports point cloud as canopy and point density rasters
+lidar_run = 0           # Imports point cloud as canopy and point density rasters
 preprocessing_run = 2   # Creates derivative GIS products slope, aspect, tree height, albedo
 rsun_run = 0            # Runs GRASS light model, r.sun
 lpi_run = 0             # Creates Light Penetration Index (LPI) from point cloud
@@ -63,7 +63,7 @@ canhor = P + 'demhor'            # horizon, canopy
 # National Center for Airborne Laser Mapping (NCALM) distributes laser hits as 2 datasets:  total and ground filtered.
 # Version 1.0 only processes ASCII files with ground filtered exported to a separate directory.  Future versions will 
 # use .las files in a single directory.
-year = 'y014'	        		            # Year the LiDAR was flown 2004 'y04', 2004 modified to match y09 'ym4',2009 'y09'
+year = 'y14'	        		            # Year the LiDAR was flown 2004 'y04', 2004 modified to match y09 'ym4',2009 'y09'
 pdensitypref = 'pointdensity_c'+str(C)+year	    # prefix to the point density rasters
 inSuffix='xyz'                                      # filename suffix to filter for
 overlap = float(0.00)				    # tile overlap in meters  10.00 m (y04,y09), 0.00 m (y14)
