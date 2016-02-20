@@ -22,8 +22,8 @@
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
 lidar_run = 0           # Imports point cloud as canopy and point density rasters
-preprocessing_run = 2   # Creates derivative GIS products slope, aspect, tree height, albedo
-rsun_run = 0            # Runs GRASS light model, r.sun
+preprocessing_run = 0   # Creates derivative GIS products slope, aspect, tree height, albedo
+rsun_run = 2            # Runs GRASS light model, r.sun
 lpi_run = 0             # Creates Light Penetration Index (LPI) from point cloud
 algore_run = 0          # Algorithm for combining all the parts into the SRR
 
@@ -74,14 +74,20 @@ inPath='/data/source/LiDAR/2014_EelBathymetry_LiDAR/Angelo/Tiles_ASCII_xyz/'
 #inPath='/data/source/LiDAR/2004_SFEel_LiDAR/TerraScan_EEL/laser_export/'
 
 #----------------------------------------------------------------------------
-# SSR2: R.HORIZON PARAMETERS
+# SSR2: LPI PARAMETERS
+#Radius = 8				# Previous radius was 8, but that is actually 8 cells per side * 2meters per cell = 32 meters, and actually I used 31x31 cell square.
+boxsize = '17'                          # Size is cell size of box for r.neighbors.  This is different than the actual box (9 cells x 2 meter cells = 18 meters)
+lpipref = 'lpi_c'+C+year+'s'+boxsize   # add the month to the end, e.g. lpi_c2y09s17m10
+
+#----------------------------------------------------------------------------
+# SSR3: R.HORIZON PARAMETERS
 maxdistance = '10000'           # maxdistance = 10000 meters (longer than the diagnal of the map)
 hstep = '1'                     # horizonstep = 1 degree (causing 360 maps to be created)
 dist = '0.5'                    # normal range (0.5 - 1.5) previous runs used 0.3 ?artifacting?
                                 # dist=1.0 or greater uses simplified calculation that causes artifacts
 
 #----------------------------------------------------------------------------
-# SSR3: R.SUN Solar Model Parameters
+# SSR4: R.SUN Solar Model Parameters
 # r.sun is designed to be run for 1 day, 24 hours.  script runs for 1 year, every week.
 linke_array = 'helios'          # various options of turbidity values, "helios" is default for Angelo.
 tl = linke_array
@@ -90,11 +96,6 @@ week_step = 7                   # run r.sun once every week
 timestep = '0.1'                # 0.1 decimal hour = 6 minute timestep, default 0.5(30min), last run 0.5
 calib = 'hd'                    # r.sun calibration code:  'hd' = 0.50 * Diffuse, 1.0 * Direct, reflection is ignored.
                                 # calibration needs to be moved to algore script
-#----------------------------------------------------------------------------
-# SSR4: LPI PARAMETERS
-#Radius = 8				# Previous radius was 8, but that is actually 8 cells per side * 2meters per cell = 32 meters, and actually I used 31x31 cell square.
-boxsize = '17'                          # Size is cell size of box for r.neighbors.  This is different than the actual box (9 cells x 2 meter cells = 18 meters)
-lpipref = 'lpi_c'+C+year+'s'+boxsize   # add the month to the end, e.g. lpi_c2y09s17m10
 
 #----------------------------------------------------------------------------
 # SSR5: ALGORE PARAMETERS

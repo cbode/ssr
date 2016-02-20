@@ -47,36 +47,22 @@ from ssr_utilities import *
 
 
 # FUNCTIONS
-def preprocessing(localpath,mapset,ow):
+def preprocessing(localpath,mapset,canr,ow):
     gsetup.init(gisbase, gisdbase, location, mapset)
     set_region(bregion,C)
     
-    # Check to see if canopy raster exists, and if so, which
-    print "checking existance of canopy rasters"
-    boocan = False #raster_exists(can,mapset)
-    print "boocan: ",boocan
-    #boocansource = raster_exists(cansource,mapset)
-    boocansource = True
-    print "boocansource: ",boocansource
-    if(boocan == True and boocansource == False):
-        cansource = can
-        print 'cansource now = can'
-        printout("LiDAR derived canopy raster exists. using "+can,lf)
-    elif(boocan == False and boocansource == False):
+    # Canopy Raster - 2nd test
+    boocan = raster_exists(canr,mapset)
+    if(boocan == False):
         str_error = "Canopy raster does not exist. Please run ssr_lidar.py first"
-        printout(str_error,lf)
-        sys.exit(str_error)
-    else:
-        printout("Canopy source exists. using "+cansource,lf)
-    print "DONE with CAN. Starting Preprocessing."
-    sys.exit("stopping to make sure the can check works")
+        return str_error
+    print 'not dead yet',boocan
     
     # Regrid from Input Raster to Target Cell size
     if(demsource != dem):
         grass.run_command("r.resample",input=demsource,output=dem,overwrite=ow)
-    if(cansource != can):
-        if(raster_exists(can) == False):
-            grass.run_command("r.resample",input=cansource,output=can,overwrite=ow)
+    if(canr != can):
+        grass.run_command("r.resample",input=canr,output=can,overwrite=ow)
     
     # Slope and Aspect
     grass.run_command("r.slope.aspect", elevation=dem, slope=sloped, \
@@ -91,6 +77,9 @@ def preprocessing(localpath,mapset,ow):
     albedofile = localpath+'albedo_recode.txt'
     grass.run_command("r.recode",flags="a",input=vegheight,output=albedo,\
                         rules=albedofile, overwrite=ow)
+    # return to main
+    str_result = 'Preprocessing: completed successfully using canopy raster: ',canr
+    return str_result
 
 def worker_sun(cpu,julian_seed,step,demr,ow):
     mtemp = 'temp'+str(cpu).zfill(2)
@@ -150,6 +139,7 @@ def linke_interp(day,turb_array):
     lt = linke(day)
     return lt
 
+
 def main():
     ##################################
     # R.SUN SOLAR MODEL
@@ -189,8 +179,18 @@ def main():
         R1starttime = dt.datetime.strftime(R1start,"%m-%d %H:%M:%S")
         printout('START PREPROCESSING at '+ str(R1starttime),lf)
         
-        preprocessing(localpath,'PERMANENT',int(preprocessing_run - 1))
-        
+        # Canopy Raster check: is there a source raster? Did ssr_lidar.py make one?
+        if(cansource != ''):
+            canr = cansource
+            printout("Source canopy raster exists. using "+cansource,lf)
+        else:
+            canr = can
+            printout("Source canopy raster missing! using "+can,lf)
+
+        # preprocessing call to function (where the magic happens)
+        str_result = preprocessing(localpath,'PERMANENT',canr,int(preprocessing_run - 1))
+        printout(str_result,lf)
+
         R1end = dt.datetime.now()
         R1endtime = dt.datetime.strftime(R1end,"%m-%d %H:%M:%S")
         R1processingtime = R1end - R1start
@@ -204,7 +204,7 @@ def main():
         
         # Create one temp directory for each CPU core
         printout("Creating Temporary directories, one per cpu core.",lf)
-        create_temp(cores,lf)
+        create_temp(cores,bregion,C,lf)
         
         # Spawn R.SUN processes
         step = cores * week_step

@@ -45,15 +45,15 @@ def main():
     tlog = dt.datetime.strftime(dt.datetime.now(),"%Y-%m-%d_h%H")
     lf = open(gisdbase+os.sep+'ssr_'+tlog+'_lpi.log', 'a')
     #mlpi = 'lpi'    # <-- debug remove
-    
+    ow = lpi_run-1
     printout("STARTING LPI RUN",lf)
-    printout("LOCATION: "+loc,lf)
+    printout("LOCATION: "+location,lf)
     printout("Source DEM: "+demsource,lf)
     printout("Source CAN: "+cansource,lf)
-    printout('pref: '+pref,lf)
     printout("LPI pref: "+lpipref,lf)
     printout('LPI mapset: '+mlpi,lf)
     printout("Boxsize: "+boxsize,lf)
+    printout('Overwrite: '+str(ow),lf)
     printout('_________________________________',lf)
 	
     # LPI
@@ -90,17 +90,17 @@ def main():
                 # LPI = Ground Filtered sum of LiDAR points / Raw All summed Points.  Result is a dimensionless ratio of Canopy Gap or Openness.
                 # Ratios occasionally exceed 1.0 (100%), so additional cleaning step included to set those to 100%.
                 printout("running neighborhood operation for ground filtered, weight"+weight,lf)
-                grass.run_command("r.neighbors", overwrite = "true", input= pdensityfilt, output = pneighfilt, method = "sum", size = boxsize, weight = weight_file)
-                grass.run_command("r.neighbors", overwrite = "true", input= pdensityunf, output = pneighunf, method = "sum", size = boxsize, weight = weight_file)
+                grass.run_command("r.neighbors", overwrite = ow, input= pdensityfilt, output = pneighfilt, method = "sum", size = boxsize, weight = weight_file)
+                grass.run_command("r.neighbors", overwrite = ow, input= pdensityunf, output = pneighunf, method = "sum", size = boxsize, weight = weight_file)
                 if(year == 'ym4'):
                         str_formula = "3.71 * ( A / B )^1.3455"
                 elif(year == 'yr4'):
                         str_formula = "6.5 * ( A / B )^1.57 + 0.005"                                
                 else:
                         str_formula = "A / B"
-                grass.run_command("r.mapcalculator", overwrite = "true", amap = pneighfilt, bmap = pneighunf, formula = str_formula, outfile = lpi)	
+                grass.run_command("r.mapcalculator", overwrite = ow, amap = pneighfilt, bmap = pneighunf, formula = str_formula, outfile = lpi)	
                 str_formula = "if( A > 1.0, 1.0, A)"
-                grass.run_command("r.mapcalculator", overwrite = "true", amap =  lpi, formula = str_formula, outfile = lpi)	
+                grass.run_command("r.mapcalculator", overwrite = ow, amap =  lpi, formula = str_formula, outfile = lpi)	
                 printout("finished creating "+lpi,lf)
                 
         # Copy/rename each weight to their respective months
@@ -109,7 +109,7 @@ def main():
                 monthlpi = lpipref+"m"+str(month).zfill(2)
                 str_rasts = wlpi+","+monthlpi
                 grass.message("Copying "+wlpi+" to "+monthlpi+" at "+str(dt.datetime.now()))
-                grass.run_command("g.copy",overwrite = "true",rast = str_rasts)
+                grass.run_command("g.copy",overwrite = ow,rast = str_rasts)
         
         # Finish
         set_region('default',C)

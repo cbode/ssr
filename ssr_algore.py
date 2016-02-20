@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 ############################################################################
 #
-# MODULE:       ssr6_algore.py
+# MODULE:       ssr_algore.py
 # AUTHOR:       Collin Bode, UC Berkeley
-#               modified from r.out.xyz
+#
 # PURPOSE:
 # 		Al Gore Rhythm combines r.sun model with Light Penetration Index (LPI).
 #		Merges all the r.sun solar radiation runs into a single estimate of
@@ -69,7 +69,7 @@ def main():
 
     # Goto Correct Mapset and make sure Region is correctly set (ssr_utilities)
     mapset_gotocreate(mssr)
-    set_region(bregion)
+    set_region(bregion,C)
 
     # For each week 
     for doyn in range(5,366,7):

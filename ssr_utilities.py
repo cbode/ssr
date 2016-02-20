@@ -72,19 +72,12 @@ def mapset_gotocreate(mapset,bregion,C,lf):
 
 def raster_exists(raster,mapset):
     #boocan = raster_exists(can,'PERMANENT')
-    print '1 start'
     booexists = False
-    print '2 list'
     raster_list = grass.list_grouped('rast')[mapset] 
-    print '3 iteration'
     for rast in raster_list:
-        print '4 ',rast
         if(rast == raster):
            booexists = True
-           print '5 found a true'
-    print '6 done with iter'
     return booexists
-    print '7 returned'
 
 		
 ###############################################################
@@ -124,11 +117,11 @@ def get_path():
     return path
 
 
-def create_temp(cores,bregion,lf): # OUTSIDE
+def create_temp(cores,bregion,C,lf): # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
         for count in range(0,cores,1):
                 temp = 'temp'+str(count).zfill(2)
-                temp_path = gisdbase+'/'+location+'/'+temp
+                temp_path = gisdbase+os.sep+location+os.sep+temp
                 if(os.path.exists(temp_path) == False):
                         grass.run_command("g.mapset",flags="c", mapset=temp, quiet=1)
                         set_region(bregion,C)
