@@ -56,7 +56,7 @@ def preprocessing(localpath,mapset,canr,ow):
     if(boocan == False):
         str_error = "Canopy raster does not exist. Please run ssr_lidar.py first"
         return str_error
-    print 'not dead yet',boocan
+    print 'canopy rester exists: ',boocan
     
     # Regrid from Input Raster to Target Cell size
     if(demsource != dem):
@@ -95,7 +95,7 @@ def worker_sun(cpu,julian_seed,step,demr,ow):
         horr = canhor
 
     # Run r.sun for each week of the year 366
-    for doy in range(julian_seed,366,step):
+    for doy in range(julian_seed,100,step): # 366 normal max day of year
         day = str(doy).zfill(3)
         linke = linke_interp(doy,linke_array)
         # Output maps
@@ -114,7 +114,7 @@ def worker_sun(cpu,julian_seed,step,demr,ow):
 
 def linke_interp(day,turb_array):
     # put monthly data here
-    # Angelo area LT from helios - cab
+    # Angelo area LT from helios satellite data (http://www.soda-is.com/linke/linke_helioserve.html)
     # ltm1 and angelo-1 are identical, kept for backwards compatibility.  They are helios - 1
     if turb_array == 'helios':
         linke_data = numpy.array ([3.2,3.2,3.2,3.4,3.7,3.8,3.7,3.8,3.5,3.4,3.1,2.9])
@@ -171,6 +171,8 @@ def main():
     printout('timestep: '+timestep,lf)
     printout('start julian day: '+str(start_day),lf)
     printout('week step: '+str(week_step),lf)
+    printout('Run Preprocessing: '+str(preprocessing_run),lf)
+    printout('Run r.sun: '+str(rsun_run),lf)
     printout('_________________________________',lf)
     
     # Preprocessing
@@ -242,7 +244,8 @@ def main():
         printout('END  at '+ R3endtime+ ', processing time: '+str(R3processingtime),lf)
     
     # Done
-    printout('ssr_rsun.py done',lf)
+    printout('_________________________________',lf)
+    printout('ssr_rsun.py DONE',lf)
     lf.close()
 
 if __name__ == "__main__":

@@ -22,9 +22,9 @@
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
 lidar_run = 0           # Imports point cloud as canopy and point density rasters
-preprocessing_run = 0   # Creates derivative GIS products slope, aspect, tree height, albedo
-rsun_run = 2            # Runs GRASS light model, r.sun
 lpi_run = 0             # Creates Light Penetration Index (LPI) from point cloud
+preprocessing_run = 2   # Creates derivative GIS products slope, aspect, tree height, albedo
+rsun_run = 0            # Runs GRASS light model, r.sun
 algore_run = 0          # Algorithm for combining all the parts into the SRR
 
 #----------------------------------------------------------------------------
@@ -32,7 +32,7 @@ algore_run = 0          # Algorithm for combining all the parts into the SRR
 # GRASS GIS requires 4 inputs to start: 
 gisbase = '/usr/lib64/grass-6.4.4'  # GIS BASE (GISBASE): path to GRASS binaries.
 gisdbase = '/data/grass_workspace'  # DATABASE (GISDBASE): directory containing all GRASS layers. 
-location = 'angelo2014'             # LOCATION: defined by coordinate system & bounding box.                     
+location = 'angelo2m2014'             # LOCATION: defined by coordinate system & bounding box.                     
 mapset = 'PERMANENT'                # MAPSET: each GRASS session runs under a unique MAPSET. PERMANENT is default.
 
 # Resolution and Bounding box

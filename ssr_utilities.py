@@ -36,10 +36,7 @@ def printout(str_text,lf):
     print timestamp+": "+str_text
 
 def set_region(bregion,C):
-    # remove g.region for normal runs
-    if(bregion == "default" or bregion == "d"):
-        grass.run_command("g.region", flags="d")            
-    elif(bregion == "b5k"):
+    if(bregion == "b5k"):
         grass.run_command("g.region", n=4400220.4, s=4395220.4, e=447761.8, w=442761.8,ewres=C,nsres=C) # b5k
     elif(bregion == "b8k"):
         grass.run_command("g.region", n=4401000.00, s=4393000.00, e=450000.00, w=442000.00,ewres=C,nsres=C) #b8k

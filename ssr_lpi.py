@@ -76,6 +76,11 @@ def main():
         # Set names for ground/filtered and all/unfiltered point density rasters
         pdensityfilt = pdensitypref + LidarPoints[0]
         pdensityunf = pdensitypref + LidarPoints[1]
+        
+        
+        # NOT needed. r.neighbors ignores nulls. Remove NULL from the maps to prevent nulls propagating to the final result.
+        grass.run_command("r.null", map = pdensityfilt, null = 0)
+        #grass.run_command("r.null", map = pdensityunf, null = 0)
 
         # Iterate through all the neighborhood weights and calculate LPI
         for weight in range(1,(weight_num+1)):
@@ -102,13 +107,15 @@ def main():
                 str_formula = "if( A > 1.0, 1.0, A)"
                 grass.run_command("r.mapcalculator", overwrite = ow, amap =  lpi, formula = str_formula, outfile = lpi)	
                 printout("finished creating "+lpi,lf)
-                
+        
         # Copy/rename each weight to their respective months
         for month,weight in month_weights.items():
                 wlpi = lpipref + "w"+str(weight)
                 monthlpi = lpipref+"m"+str(month).zfill(2)
                 str_rasts = wlpi+","+monthlpi
-                grass.message("Copying "+wlpi+" to "+monthlpi+" at "+str(dt.datetime.now()))
+                str_message = "Copying "+wlpi+" to "+monthlpi+" at "+str(dt.datetime.now())
+                grass.message(str_message)
+                printout(str_message,lf)
                 grass.run_command("g.copy",overwrite = ow,rast = str_rasts)
         
         # Finish
