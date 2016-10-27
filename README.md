@@ -6,8 +6,8 @@ Subcanopy Solar Radiation Model
 Author: Collin
 Date: July, 2015
 
-Citation: Subcanopy Solar Radiation model: Predicting solar radiation across a heavily vegetated landscape using LiDAR and GIS solar radiation models
-CA Bode, MP Limm, ME Power, JC Finlay Remote Sensing of Environment 154, 387-397
+Citation: <a href="https://ib.berkeley.edu/labs/power/publications/Bode_2014_RemSensEnvir.pdf">Subcanopy Solar Radiation model: Predicting solar radiation across a heavily vegetated landscape using LiDAR and GIS solar radiation models
+CA Bode, MP Limm, ME Power, JC Finlay Remote Sensing of Environment 154, 387-397</a>
 
 What is SSR?
 ===
