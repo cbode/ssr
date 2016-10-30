@@ -23,16 +23,16 @@
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
 lidar_run = 0           # Imports point cloud as canopy and point density rasters
 lpi_run = 0             # Creates Light Penetration Index (LPI) from point cloud
-preprocessing_run = 2   # Creates derivative GIS products slope, aspect, tree height, albedo
-rsun_run = 0            # Runs GRASS light model, r.sun
-algore_run = 0          # Algorithm for combining all the parts into the SRR
+preprocessing_run = 0   # Creates derivative GIS products slope, aspect, tree height, albedo
+rsun_run = 1            # Runs GRASS light model, r.sun
+algore_run = 2          # Algorithm for combining all the parts into the SRR
 
 #----------------------------------------------------------------------------
 # GENERAL PARAMETERS
 # GRASS GIS requires 4 inputs to start: 
 gisbase = '/usr/lib64/grass-6.4.4'  # GIS BASE (GISBASE): path to GRASS binaries.
 gisdbase = '/data/grass_workspace'  # DATABASE (GISDBASE): directory containing all GRASS layers. 
-location = 'angelo2m2014'             # LOCATION: defined by coordinate system & bounding box.                     
+location = 'angelo2014'             # LOCATION: defined by coordinate system & bounding box.                     
 mapset = 'PERMANENT'                # MAPSET: each GRASS session runs under a unique MAPSET. PERMANENT is default.
 
 # Resolution and Bounding box
@@ -101,7 +101,7 @@ calib = 'hd'                    # r.sun calibration code:  'hd' = 0.50 * Diffuse
 # SSR5: ALGORE PARAMETERS
 maxheight = '2'   			    # Vegetation height after which canopy is set to null
 #halfdiff = True                            # Reduces the r.sun diffuse output by half. suffix 'half' on diffuse and global maps
-keeptemp = False				    # Testing only. Should be false for production.
+keeptemp = True 			    # Testing only. Should be false for production.
 lpivsjune = False                           # Analysis only. Uses June LPI only
 sky = 'cs'				    # cs 'clear sky' or rs 'real sky' which includes cloudiness index.
 algore = 'gl'		                    # Options: 'pl' = Power Law, 'nl' = Natural Log, 'd' for old default value of 1, 

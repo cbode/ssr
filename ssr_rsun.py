@@ -95,7 +95,7 @@ def worker_sun(cpu,julian_seed,step,demr,ow):
         horr = canhor
 
     # Run r.sun for each week of the year 366
-    for doy in range(julian_seed,100,step): # 366 normal max day of year
+    for doy in range(julian_seed,366,step): # 366 normal max day of year
         day = str(doy).zfill(3)
         linke = linke_interp(doy,linke_array)
         # Output maps
@@ -231,12 +231,15 @@ def main():
             
         # Copy all the files back over to sun mapset
         suffixes = ['glob','beam','diff','refl','dur']
-        mapset_gotocreate(msun)
-        copy_fromtemp(cores,msun,suffixes,1,lf)
+        printout('Creating mapset '+msun,lf)
+        mapset_gotocreate_outside(msun,bregion,C,lf)
+        printout('Copying temp directories to '+msun,lf)
+        copy_fromtemp(cores,msun,suffixes,1,bregion,C,lf)
         
         # Delete the temp mapsets
+        printout("Removing temp mapsets",lf)
         remove_temp(cores)
-        
+
         # Finish
         R3end = dt.datetime.now()
         R3endtime = dt.datetime.strftime(R3end,"%m-%d %H:%M:%S")

@@ -52,13 +52,15 @@ def set_region(bregion,C):
 
 def mapset_gotocreate(mapset,bregion,C,lf):
     #grass.run_command("g.mapset","l")
+    printout("Attempting to go to or create "+mapset+" for region="+bregion+", cell="+C,lf)
     bmapexists = False
     mapset_list = grass.mapsets(False) 
     for map in mapset_list:
         grass.message(map)
         if(mapset == map):
             bmapexists = True
-            #grass.message("FOUND! "+mapset+" = "+map)
+            grass.message("FOUND! "+mapset+" = "+map)
+            printout("Found "+mapset+" printout version",lf)
     if(bmapexists == True):
         grass.run_command("g.mapset",mapset=mapset)
         printout('Changed mapsets to '+mapset,lf)
@@ -138,7 +140,7 @@ def remove_temp(cores): # OUTSIDE
                 shutil.rmtree(temp_path)
                 
 
-def copy_fromtemp(cores,mapset_to,suffixes,overwrite,lf):  # OUTSIDE
+def copy_fromtemp(cores,mapset_to,suffixes,overwrite,bregion,C,lf):  # OUTSIDE
         gsetup.init(gisbase, gisdbase, location, mapset_to)
         for count in range(0,cores):
                 # Switch to temp mapset
@@ -174,3 +176,6 @@ def copy_mapset(mapset_from,mapset_to,regfilter,overwrite,lf):      # OUTSIDE
                         grass.run_command("g.copy", rast=cmd, overwrite=overwrite)
 
 
+def mapset_gotocreate_outside(mapset,bregion,C,lf):            # OUTSIDE
+    gsetup.init(gisbase, gisdbase, location, 'PERMANENT')
+    mapset_gotocreate(mapset,bregion,C,lf)
