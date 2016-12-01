@@ -21,11 +21,11 @@
 
 #----------------------------------------------------------------------------
 # Run Parts?  0 = do not run, 1 = run, but do not overwrite maps, 2 = run, overwrite maps
-lidar_run = 0           # Imports point cloud as canopy and point density rasters
+lidar_run = 2           # Imports point cloud as canopy and point density rasters
 lpi_run = 0             # Creates Light Penetration Index (LPI) from point cloud
 preprocessing_run = 0   # Creates derivative GIS products slope, aspect, tree height, albedo
-rsun_run = 1            # Runs GRASS light model, r.sun
-algore_run = 2          # Algorithm for combining all the parts into the SRR
+rsun_run = 0            # Runs GRASS light model, r.sun
+algore_run = 0          # Algorithm for combining all the parts into the SRR
 
 #----------------------------------------------------------------------------
 # GENERAL PARAMETERS
@@ -37,7 +37,7 @@ mapset = 'PERMANENT'                # MAPSET: each GRASS session runs under a un
 
 # Resolution and Bounding box
 C = '2'                             # cell size in meters 2
-bregion = 'default'                       # boundary used in g.region: b5k,b8k,b10, d = default. utilities needs to be changed for different regions.
+bregion = 'default'                 # boundary used in g.region: b5k,b8k,b10, d = default. utilities needs to be changed for different regions.
 
 # INPUT RASTER NAMES
 demsource = 'angelo1m2014dem'
@@ -66,7 +66,7 @@ canhor = P + 'demhor'            # horizon, canopy
 year = 'y14'	        		            # Year the LiDAR was flown 2004 'y04', 2004 modified to match y09 'ym4',2009 'y09'
 pdensitypref = 'pointdensity_c'+str(C)+year	    # prefix to the point density rasters
 inSuffix='xyz'                                      # filename suffix to filter for
-overlap = float(0.00)				    # tile overlap in meters  10.00 m (y04,y09), 0.00 m (y14)
+overlap = float(0)				    # tile overlap in meters  10.00 m (y04,y09), 0.00 m (y14)
 sep = ','				            # separator in lidar files ' ' or ','
 LidarPoints = [ 'filtered' , 'unfiltered' ]         # subdirectories under inPath.  y04 = [ 'ground' , 'all' ]
 inPath='/data/source/LiDAR/2014_EelBathymetry_LiDAR/Angelo/Tiles_ASCII_xyz/'

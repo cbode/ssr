@@ -7,6 +7,7 @@
 # PURPOSE:
 # 	1. Accept ASCII xyz LiDAR files (filtered & unfiltered) and import them into GRASS gis as raster.
 #   	   This assumes filenames include an indicator that allows you to match filtered to unfiltered.
+#          Tiles sometimes overlap, so an overlap distance is added in parameters to clip tiles.
 # 	2. Calculate point density using an asymetric nearest neighbor box.
 #       3. Calculate Canopy raster using point maximum.  Requires cansource = '' in ssr_parameter file.
 #
@@ -51,7 +52,7 @@ def main():
     if(cansource == ''):
         boocan = True
 
-    printout("STARTING LPI RUN",lf)
+    printout("STARTING LiDAR RUN",lf)
     printout("LOCATION: "+location,lf)
     printout("LiDAR year: "+year,lf)
     printout('Prefix: '+P,lf)
@@ -97,12 +98,14 @@ def main():
                     fstart = dt.datetime.now()
                     printout("Importing: "+strFile+" as "+tile,lf)
                     # n=4399092 s=4396972 e=446782 w=444662 b=365 t=754
+                    
                     str_boundary = grass.read_command("r.in.xyz", flags = "sg", input = inDir+strFile, fs = sep, output = "temp")
                     boundary = str_boundary.split(' ')
-                    tn = (boundary[0].split('='))[1]
-                    ts = (boundary[1].split('='))[1]
-                    te = (boundary[2].split('='))[1]
-                    tw = (boundary[3].split('='))[1]
+                    Cf = float(C)
+                    tn = round(float((boundary[0].split('='))[1]))+Cf # add
+                    ts = round(float((boundary[1].split('='))[1]))-Cf # subtract
+                    te = round(float((boundary[2].split('='))[1]))+Cf  # add
+                    tw = round(float((boundary[3].split('='))[1]))-Cf  # subtract
                     tb = (boundary[4].split('='))[1]
                     tt = (boundary[5].split('='))[1]
                     grass.run_command("g.region", overwrite = ow, n=tn, s=ts, e=te, w=tw, b=tb, t=tt)
@@ -113,6 +116,7 @@ def main():
                     # Some LiDAR Tiles overlap. These need to be clipped before merging together
                     ctile = 'c'+tile
                     ccantile = 'c'+cantile
+                    
                     if(overlap == 0):
                         grass.run_command("g.rename",rast=tile+","+ctile)
                         if(boocan == True):
@@ -141,7 +145,7 @@ def main():
             
             # Reset the mapset from tile size to default (with proper cell size)
             set_region('lpi',C)
-
+            
             ##################
             # Point Density Map
             # Mosaic all the tiles into one map
@@ -153,12 +157,16 @@ def main():
             ctile_list = patch_list.split(',')
             for ctile in ctile_list:
                 grass.run_command("g.remove", flags = "f", rast = ctile)
-
+            
             ##################
             # Canopy Map
             if(boocan == True):
                 # Mosaic all the tiles into one map
-                grass.run_command("r.patch", overwrite = ow, input = can_patch_list, output = can)
+                tmp_can = can+'_temp'
+                grass.run_command("r.patch", overwrite = ow, input = can_patch_list, output = tmp_can)
+                # Remove NoData gaps from canopy that are covered in bare-earth DEM. This is important for lakes and river pools 
+                grass.mapcalc("$can = if(isnull($tmp_can), $dem, $tmp_can)", can = can, dem = dem, tmp_can = tmp_can,overwrite = ow)
+                grass.run_command("g.remove", flags = "f", rast = tmp_can)
                 printout('Canopy raster '+can+' has been created.',lf)
          
                 # Delete the clipped tiles, leaving only a completed canopy map
